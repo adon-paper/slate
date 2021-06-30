@@ -175,37 +175,39 @@ func (r *ArangoBaseRepository) BuildFilter(s interface{}, filters []ArangoFilter
 		}
 
 	} else {
-		// fmt.Println(v.NumField())
 		for i := 0; i < v.NumField(); i++ {
-			tags := strings.Split(v.Type().Field(i).Tag.Get("json"), ",")
-			value := v.Field(i).Interface()
-			if (strings.Contains(v.Type().Field(i).Type.String(), "") || strings.Contains(v.Type().Field(i).Type.String(), "dto.")) && !strings.Contains(v.Type().Field(i).Type.String(), "Interface") {
-				var tag string
-				if collection := joinCollection + v.Type().Field(i).Tag.Get("Collection"); collection != "" || tags[0] == r.Collection {
-					tag = ""
-				} else {
-					tag = tags[0]
-				}
+			if v.Field(i).CanInterface() {
+				tags := strings.Split(v.Type().Field(i).Tag.Get("json"), ",")
+				value := v.Field(i).Interface()
+				if v.Field(i).Kind() == reflect.Struct {
+					fmt.Println(v.Type().Field(i).Type.String())
+					var tag string
+					if collection := joinCollection + v.Type().Field(i).Tag.Get("collection"); collection != "" || tags[0] == r.Collection {
+						tag = ""
+					} else {
+						tag = tags[0]
+					}
 
-				filters = r.BuildFilter(value, filters, joinCollection+v.Type().Field(i).Tag.Get("Collection"), tag)
-			} else {
-				if !helper.Empty(value) {
-					var filter ArangoFilterQueryBuilder
-					if filterKey := v.Type().Field(i).Tag.Get("filter"); filterKey != "" {
-						if v.Type().Field(i).Type.String()[:2] == "[]" {
-							filter.Key = collectionPrefix + prefix + filterKey
-							filter.Value = v.Field(i).Interface()
-							filter.Operator = "IN"
+					filters = r.BuildFilter(value, filters, joinCollection+v.Type().Field(i).Tag.Get("collection"), tag)
+				} else {
+					if !helper.Empty(value) {
+						var filter ArangoFilterQueryBuilder
+						if filterKey := v.Type().Field(i).Tag.Get("filter"); filterKey != "" {
+							if v.Type().Field(i).Type.String()[:2] == "[]" {
+								filter.Key = collectionPrefix + prefix + filterKey
+								filter.Value = v.Field(i).Interface()
+								filter.Operator = "IN"
+								filters = append(filters, filter)
+							}
+						} else {
+							filter.Key = collectionPrefix + prefix + tags[0]
+							filter.Value = value
+							if tags[0] == "created_at" || tags[0] == "updated_at" {
+								filter.Operator = "LIKE"
+								filter.Value = value.(time.Time).Format("2006-01-02")
+							}
 							filters = append(filters, filter)
 						}
-					} else {
-						filter.Key = collectionPrefix + prefix + tags[0]
-						filter.Value = value
-						if tags[0] == "created_at" || tags[0] == "updated_at" {
-							filter.Operator = "LIKE"
-							filter.Value = value.(time.Time).Format("2006-01-02")
-						}
-						filters = append(filters, filter)
 					}
 				}
 			}
