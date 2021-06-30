@@ -1,5 +1,5 @@
-github.com/arangodb/go-driver v0.0.0-20210608063820-cd7131034c24 h1:Tmuxuw6asYMsGa73rB8vGcE4ipX+j1uBFsodYqtCJNE=
-github.com/arangodb/go-driver v0.0.0-20210608063820-cd7131034c24/go.mod h1:3NUekcRLpgheFIGEwcOvxilEW73MV1queNKW58k7sdc=
+github.com/arangodb/go-driver v0.0.0-20210621075908-e7a6fa0cbd18 h1:3J0tqp5eQ8ptGOeeu7vo92RKf24bOA7MFy0z3uPiTWg=
+github.com/arangodb/go-driver v0.0.0-20210621075908-e7a6fa0cbd18/go.mod h1:3NUekcRLpgheFIGEwcOvxilEW73MV1queNKW58k7sdc=
 github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e h1:Xg+hGrY2LcQBbxd0ZFdbGSyRKTYMZCfBbw/pMJFOk1g=
 github.com/arangodb/go-velocypack v0.0.0-20200318135517-5af53c29c67e/go.mod h1:mq7Shfa/CaixoDxiyAAc5jZ6CVBAyPaNQCGS7mkj4Ho=
 github.com/coreos/go-iptables v0.4.3/go.mod h1:/mVI274lEDI2ns62jHCDnCyBF9Iwsmekav8Dbxlm1MU=

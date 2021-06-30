@@ -3,13 +3,13 @@ package arango
 import (
 	"context"
 	"fmt"
-	"log"
 	"reflect"
-	"slate/constant"
-	"slate/helper"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/noldwidjaja/slate/constant"
+	"github.com/noldwidjaja/slate/helper"
 
 	"github.com/arangodb/go-driver"
 )
@@ -26,15 +26,12 @@ type ArangoBaseRepositoryInterface interface {
 }
 
 type arangoBaseRepository struct {
-	logger   *log.Logger
-	arangoDB ArangoDB
-
+	arangoDB   ArangoDB
 	collection string
 }
 
-func NewArangoBaseRepository(logger *log.Logger, arangoDB ArangoDB) ArangoBaseRepositoryInterface {
+func NewArangoBaseRepository(arangoDB ArangoDB) ArangoBaseRepositoryInterface {
 	return &arangoBaseRepository{
-		logger:   logger,
 		arangoDB: arangoDB,
 	}
 }
