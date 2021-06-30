@@ -2,7 +2,6 @@ package arango
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -171,7 +170,7 @@ func (r *ArangoBaseRepository) BuildFilter(s interface{}, filters []ArangoFilter
 
 	if v.Kind() == reflect.Slice {
 		if len(s.([]interface{})) > 0 {
-			fmt.Println(s)
+			// Todo : Filter by contents of array[0] in arango's array[*]
 		}
 
 	} else {
@@ -180,7 +179,6 @@ func (r *ArangoBaseRepository) BuildFilter(s interface{}, filters []ArangoFilter
 				tags := strings.Split(v.Type().Field(i).Tag.Get("json"), ",")
 				value := v.Field(i).Interface()
 				if v.Field(i).Kind() == reflect.Struct {
-					fmt.Println(v.Type().Field(i).Type.String())
 					var tag string
 					if collection := joinCollection + v.Type().Field(i).Tag.Get("collection"); collection != "" || tags[0] == r.Collection {
 						tag = ""
@@ -231,13 +229,12 @@ func (r *ArangoBaseRepository) RawFirst(c context.Context, queryBuilder ArangoQu
 
 	_, query, condition := r.buildQuery(queryBuilder)
 
-	fmt.Println(query)
-	fmt.Println(condition)
-
 	data, err := r.ArangoDB.DB().Query(ctx, query, condition)
 	if err != nil {
 		return err
 	}
+
+	defer data.Close()
 
 	if data.Count() > 0 {
 		data.ReadDocument(c, &request)
@@ -270,6 +267,8 @@ func (r *ArangoBaseRepository) RawAll(c context.Context, queryBuilder ArangoQuer
 		return response, 0, err
 	}
 
+	defer data.Close()
+
 	if data.Count() > 0 {
 		for data.HasMore() {
 			var request interface{}
@@ -282,6 +281,8 @@ func (r *ArangoBaseRepository) RawAll(c context.Context, queryBuilder ArangoQuer
 	if err != nil {
 		return response, 0, err
 	}
+
+	defer countData.Close()
 
 	var totalRecords int64
 	if countData.Count() > 0 {
