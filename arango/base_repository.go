@@ -25,18 +25,18 @@ type ArangoBaseRepositoryInterface interface {
 	delete(c context.Context, request ArangoInterface) error
 }
 
-type arangoBaseRepository struct {
+type ArangoBaseRepository struct {
 	arangoDB   ArangoDB
 	collection string
 }
 
 func NewArangoBaseRepository(arangoDB ArangoDB) ArangoBaseRepositoryInterface {
-	return &arangoBaseRepository{
+	return &ArangoBaseRepository{
 		arangoDB: arangoDB,
 	}
 }
 
-func (r *arangoBaseRepository) parseFilterToQuery(queryBuilder ArangoQueryBuilder) (string, map[string]interface{}) {
+func (r *ArangoBaseRepository) parseFilterToQuery(queryBuilder ArangoQueryBuilder) (string, map[string]interface{}) {
 	var filterQuery string
 	filterArgs := make(map[string]interface{})
 
@@ -68,7 +68,7 @@ func (r *arangoBaseRepository) parseFilterToQuery(queryBuilder ArangoQueryBuilde
 	return filterQuery, filterArgs
 }
 
-func (r *arangoBaseRepository) parseJoinToQuery(queryBuilder ArangoQueryBuilder) (string, string) {
+func (r *ArangoBaseRepository) parseJoinToQuery(queryBuilder ArangoQueryBuilder) (string, string) {
 	var joinQuery string
 	resultQuery := "data"
 
@@ -109,7 +109,7 @@ func (r *arangoBaseRepository) parseJoinToQuery(queryBuilder ArangoQueryBuilder)
 	return joinQuery, resultQuery
 }
 
-func (r *arangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (string, string, map[string]interface{}) {
+func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (string, string, map[string]interface{}) {
 
 	filterQuery, filterArgs := r.parseFilterToQuery(queryBuilder)
 	joinQuery, resultQuery := r.parseJoinToQuery(queryBuilder)
@@ -153,7 +153,7 @@ func (r *arangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (stri
 	return totalRecordsQuery, query, filterArgs
 }
 
-func (r *arangoBaseRepository) buildFilter(s interface{}, filters []ArangoFilterQueryBuilder, joinCollection string, prefixes ...string) []ArangoFilterQueryBuilder {
+func (r *ArangoBaseRepository) buildFilter(s interface{}, filters []ArangoFilterQueryBuilder, joinCollection string, prefixes ...string) []ArangoFilterQueryBuilder {
 	v := reflect.Indirect(reflect.ValueOf(s))
 
 	var collectionPrefix string
@@ -214,7 +214,7 @@ func (r *arangoBaseRepository) buildFilter(s interface{}, filters []ArangoFilter
 	return filters
 }
 
-func (r *arangoBaseRepository) first(c context.Context, request ArangoInterface) error {
+func (r *ArangoBaseRepository) first(c context.Context, request ArangoInterface) error {
 	queryBuilder := ArangoQueryBuilder{
 		Filters: r.buildFilter(request, []ArangoFilterQueryBuilder{}, ""),
 	}
@@ -222,7 +222,7 @@ func (r *arangoBaseRepository) first(c context.Context, request ArangoInterface)
 	return r.rawFirst(c, queryBuilder, request)
 }
 
-func (r *arangoBaseRepository) rawFirst(c context.Context, queryBuilder ArangoQueryBuilder, request ArangoInterface) error {
+func (r *ArangoBaseRepository) rawFirst(c context.Context, queryBuilder ArangoQueryBuilder, request ArangoInterface) error {
 
 	ctx := driver.WithQueryCount(c)
 
@@ -244,7 +244,7 @@ func (r *arangoBaseRepository) rawFirst(c context.Context, queryBuilder ArangoQu
 	return constant.ErrorNotFound
 }
 
-func (r *arangoBaseRepository) all(c context.Context, request interface{}, baseFilter PaginationFilters) ([]interface{}, int64, error) {
+func (r *ArangoBaseRepository) all(c context.Context, request interface{}, baseFilter PaginationFilters) ([]interface{}, int64, error) {
 	queryBuilder := ArangoQueryBuilder{
 		Filters:   r.buildFilter(request, []ArangoFilterQueryBuilder{}, ""),
 		First:     baseFilter.First,
@@ -256,7 +256,7 @@ func (r *arangoBaseRepository) all(c context.Context, request interface{}, baseF
 	return r.rawAll(c, queryBuilder)
 }
 
-func (r *arangoBaseRepository) rawAll(c context.Context, queryBuilder ArangoQueryBuilder) ([]interface{}, int64, error) {
+func (r *ArangoBaseRepository) rawAll(c context.Context, queryBuilder ArangoQueryBuilder) ([]interface{}, int64, error) {
 	var response []interface{}
 	ctx := driver.WithQueryCount(c)
 
@@ -292,7 +292,7 @@ func (r *arangoBaseRepository) rawAll(c context.Context, queryBuilder ArangoQuer
 	return response, totalRecords, nil
 }
 
-func (r *arangoBaseRepository) create(c context.Context, request ArangoInterface) error {
+func (r *ArangoBaseRepository) create(c context.Context, request ArangoInterface) error {
 	collection, err := r.arangoDB.DB().Collection(c, r.collection)
 	if err != nil {
 		return err
@@ -313,7 +313,7 @@ func (r *arangoBaseRepository) create(c context.Context, request ArangoInterface
 	return nil
 }
 
-func (r *arangoBaseRepository) update(c context.Context, request ArangoInterface) error {
+func (r *ArangoBaseRepository) update(c context.Context, request ArangoInterface) error {
 	collection, err := r.arangoDB.DB().Collection(c, r.collection)
 	if err != nil {
 		return err
@@ -328,7 +328,7 @@ func (r *arangoBaseRepository) update(c context.Context, request ArangoInterface
 	return nil
 }
 
-func (r *arangoBaseRepository) delete(c context.Context, request ArangoInterface) error {
+func (r *ArangoBaseRepository) delete(c context.Context, request ArangoInterface) error {
 	collection, err := r.arangoDB.DB().Collection(c, r.collection)
 	if err != nil {
 		return err
