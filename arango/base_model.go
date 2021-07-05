@@ -3,10 +3,13 @@ package arango
 type ArangoQueryBuilder struct {
 	Filters   []ArangoFilterQueryBuilder
 	Joins     []ArangoJoinQueryBuilder
+	With      []ArangoQueryBuilder
 	First     int
 	Rows      int
 	SortField string
 	SortOrder int
+	Alias 	  string
+	Collection string
 }
 
 type ArangoDatalistResponse struct {

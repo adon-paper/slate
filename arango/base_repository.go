@@ -57,11 +57,11 @@ func (r *ArangoBaseRepository) parseFilterToQuery(queryBuilder ArangoQueryBuilde
 				filter.Value = "%" + filter.Value.(string) + "%"
 			}
 
-			filterQuery += " " + keyword + " " + filter.Key + ` ` + filter.Operator + ` @` + filter.ArgumentKey
-			filterArgs[filter.ArgumentKey] = filter.Value
+			filterQuery += " " + keyword + " " + filter.Key + ` ` + filter.Operator + ` @` + queryBuilder.Alias + filter.ArgumentKey
+			filterArgs[filter.ArgumentKey + queryBuilder.Alias] = filter.Value
 		} else {
 			filterQuery += " " + keyword + " " + filter.CustomFilter
-			filterArgs[filter.ArgumentKey] = filter.Value
+			filterArgs[filter.ArgumentKey + queryBuilder.Alias] = filter.Value
 		}
 	}
 
@@ -69,8 +69,7 @@ func (r *ArangoBaseRepository) parseFilterToQuery(queryBuilder ArangoQueryBuilde
 }
 
 func (r *ArangoBaseRepository) parseJoinToQuery(queryBuilder ArangoQueryBuilder) (string, string) {
-	var joinQuery string
-	resultQuery := "data"
+	var joinQuery,resultQuery string
 
 	if len(queryBuilder.Joins) > 0 {
 		joinQuery += " FILTER data != null "
@@ -91,7 +90,7 @@ func (r *ArangoBaseRepository) parseJoinToQuery(queryBuilder ArangoQueryBuilder)
 
 			if index == 0 {
 
-				resultQuery = `{
+				resultQuery = `
 				` + r.Collection + `: data,
 				` + join.ResultKey + ": data_" + join.CollectionTo
 			} else {
@@ -100,33 +99,74 @@ func (r *ArangoBaseRepository) parseJoinToQuery(queryBuilder ArangoQueryBuilder)
 			` + join.ResultKey + ": data_" + join.CollectionTo
 			}
 		}
-
-		resultQuery += `
-			}
-		`
 	}
 
 	return joinQuery, resultQuery
 }
 
+func (r *ArangoBaseRepository) parseWithToQuery(queryBuilder ArangoQueryBuilder) (string, string, map[string]interface{}) {
+	var withQuery, resultQuery, query string
+	var filterArgs map[string]interface{}
+	if len(queryBuilder.With) > 0 {
+
+		for index, with := range queryBuilder.With {
+			withQuery += " LET " + with.Alias + " =( "
+			if with.Alias == ""{
+				with.Alias = with.Collection + string(rune(index))
+			}
+			_, query, filterArgs = r.buildQuery(with)
+			withQuery += " " + query + " ) "
+			resultQuery += with.Alias + ":" + with.Alias
+			if index != len(queryBuilder.With) -1 {
+				resultQuery += ","
+			}
+		}
+	}
+
+	return withQuery, resultQuery, filterArgs
+}
+
 func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (string, string, map[string]interface{}) {
 
 	filterQuery, filterArgs := r.parseFilterToQuery(queryBuilder)
-	joinQuery, resultQuery := r.parseJoinToQuery(queryBuilder)
+	joinQuery, joinQueryResultQuery := r.parseJoinToQuery(queryBuilder)
+	withQuery, withQueryResultQuery, withFilterArgs := r.parseWithToQuery(queryBuilder)
 
-	var sortOrder string
+	alias := "data"
+	if queryBuilder.Alias != ""{
+		alias = queryBuilder.Alias
+	}
+
+	resultQuery:= alias
+	if joinQueryResultQuery != "" || withQueryResultQuery != ""{
+		if joinQueryResultQuery != "" && withQueryResultQuery != ""{
+			joinQueryResultQuery += ","
+		}
+		resultQuery =" { " + alias + "," + joinQueryResultQuery + withQueryResultQuery + " } "
+	}
+
+	for index, withFilterArg := range withFilterArgs{
+		filterArgs[index] = withFilterArg
+	}
+
+	var sortOrder, sort string
 	if queryBuilder.SortOrder > 0 {
 		sortOrder = "ASC"
 	} else {
 		sortOrder = "DESC"
 	}
 
-	if queryBuilder.SortField == "" {
-		queryBuilder.SortField = "created_at"
+	if queryBuilder.SortField != "" {
+		sort = `SORT data.` + queryBuilder.SortField + ` ` + sortOrder
+	}
+
+	collection := queryBuilder.Collection
+	if collection == "" {
+		collection = r.Collection
 	}
 
 	totalRecordsQuery := `
-		FOR data IN ` + r.Collection +
+		FOR ` + alias + ` IN ` + collection +
 		joinQuery + " " + filterQuery + `
 		COLLECT WITH COUNT INTO length
 		RETURN length
@@ -136,17 +176,15 @@ func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (stri
 	if queryBuilder.Rows != 0 {
 
 		query = `
-			FOR data IN ` + r.Collection +
-			joinQuery + " " + filterQuery +
-			" LIMIT " + strconv.Itoa(queryBuilder.First) + ", " + strconv.Itoa(queryBuilder.Rows) + `
-			SORT data.` + queryBuilder.SortField + ` ` + sortOrder + `
+			FOR ` + alias + ` IN ` + collection +
+			joinQuery + " " + filterQuery +	withQuery +
+			" LIMIT " + strconv.Itoa(queryBuilder.First) + ", " + strconv.Itoa(queryBuilder.Rows) + sort +`
 			RETURN ` + resultQuery
 
 	} else {
-		query = `
-		FOR data IN ` + r.Collection +
-			joinQuery + " " + filterQuery + ` 
-		SORT data.` + queryBuilder.SortField + ` ` + sortOrder + `
+		query = withQuery + `
+		FOR `+ alias +` IN ` + collection +
+			joinQuery + " " + filterQuery + sort +`
 		RETURN ` + resultQuery
 	}
 
@@ -294,6 +332,10 @@ func (r *ArangoBaseRepository) RawAll(c context.Context, queryBuilder ArangoQuer
 	}
 
 	return response, totalRecords, nil
+}
+
+func (r *ArangoBaseRepository) RawQuery(c context.Context, queryBuilder ArangoQueryBuilder) (string, string, map[string]interface{}) {
+	return  r.buildQuery(queryBuilder)
 }
 
 func (r *ArangoBaseRepository) Create(c context.Context, request ArangoInterface) error {
