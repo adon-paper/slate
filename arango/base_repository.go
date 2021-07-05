@@ -121,7 +121,7 @@ func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (stri
 		sortOrder = "DESC"
 	}
 
-	if queryBuilder.SortField != "" {
+	if queryBuilder.SortField == "" {
 		queryBuilder.SortField = "created_at"
 	}
 
