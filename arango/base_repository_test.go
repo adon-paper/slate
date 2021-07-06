@@ -33,13 +33,14 @@ func TestArango(t *testing.T) {
 
 	q, maps = repo.Where("company_email", "LIKE", "arnold.widjaja@paper").
 		JoinEdge("companies", "_id", "has_service", "ff", "any").
-		With2(
+		WithOne(
 			SubQuery("digital_payment_requests").Where("_key", "==", "1").
-				With2(
+				WithOne(
 					SubQuery("digital_payment_transaction").
 						WhereColumn("_key", "==", "dpr.payment_request"),
 					"dpt",
-				), "dpr",
+				),
+				"dpr",
 		).
 		Raw()
 

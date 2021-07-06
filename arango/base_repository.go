@@ -28,9 +28,9 @@ type ArangoBaseRepositoryInterface interface {
 	WhereOr(column string, operator string, value interface{}) *ArangoQuery
 	WhereColumn(column string, operator string, value string) *ArangoQuery
 	Join(from, fromKey, To, toKey string) *ArangoQuery
-	With(from, fromKey, to, toKey, alias string) *ArangoQuery
+	WithMany(repo *ArangoQuery, alias string) *ArangoQuery
+	WithOne(repo *ArangoQuery, alias string) *ArangoQuery
 	JoinEdge(from, fromKey, edge, alias, direction string) *ArangoQuery
-	WithEdge(from, fromKey, edge, alias, direction string) *ArangoQuery
 	Offset(offset int) *ArangoQuery
 	Limit(limit int) *ArangoQuery
 	Sort(sortField, sortOrder string) *ArangoQuery
