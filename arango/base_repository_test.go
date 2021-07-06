@@ -27,7 +27,22 @@ func TestArango(t *testing.T) {
 	// 	WithEdge("companies", "_id", "has_service", "ff", "any").
 	// 	Raw()
 
-	q, _ = repo.Where("company_email", "LIKE", "arnold.widjaja@paper").Raw()
+	// q, _ = repo.Where("company_email", "LIKE", "arnold.widjaja@paper").
+	// 	JoinEdge("companies", "_id", "has_service", "c", "any").
+	// 	Raw()
+
+	q, maps = repo.Where("company_email", "LIKE", "arnold.widjaja@paper").
+		JoinEdge("companies", "_id", "has_service", "ff", "any").
+		WithOne(
+			SubQuery("digital_payment_requests").Where("_key", "==", "1").
+				WithOne(
+					SubQuery("digital_payment_transaction").
+						WhereColumn("_key", "==", "dpr.payment_request"),
+					"dpt",
+				),
+				"dpr",
+		).
+		Raw()
 
 	fmt.Println(q)
 	fmt.Println(maps)

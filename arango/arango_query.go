@@ -2,6 +2,7 @@ package arango
 
 import (
 	"fmt"
+	"github.com/noldwidjaja/slate/helper"
 	"strconv"
 	"strings"
 )
@@ -11,11 +12,13 @@ type ArangoQuery struct {
 	query      string
 	filterArgs map[string]interface{}
 	joins      []string
-	withs      []string
+	withs      []*ArangoQuery
 	sortField  string
 	sortOrder  string
 	offset     int
 	limit      int
+	first 	   bool
+	alias 	   string
 }
 
 func SubQuery(collection string) *ArangoQuery {
@@ -83,23 +86,27 @@ func (r *ArangoQuery) Join(from, fromKey, To, toKey string) *ArangoQuery {
 	return r
 }
 
-func (r *ArangoQuery) With(from, fromKey, to, toKey, alias string) *ArangoQuery {
-	r.query += ` LET ` + alias + ` = (
-		FOR ` + to + ` IN ` + to + `
-		FILTER ` + to + "." + toKey + "==" + from + "." + fromKey
+func (r *ArangoQuery) WithOne(repo *ArangoQuery, alias string) *ArangoQuery {
+	r.first = true
+	r.with(repo,alias)
+	return r
+}
 
-	// if len(filters) > 0 {
-	// 	for _, filter := range filters {
-	// 		// filter()
-	// 	}
-	// }
+func (r *ArangoQuery) WithMany(repo *ArangoQuery, alias string) *ArangoQuery {
+	r.first = false
+	r.with(repo,alias)
+	return r
+}
 
-	r.query += `
-		RETURN ` + to + `
-	)`
-
-	r.withs = append(r.withs, alias)
-
+func (r *ArangoQuery) with(repo *ArangoQuery, alias string) *ArangoQuery {
+	q,f := repo.Raw()
+	r.query += ` LET ` + alias + ` = ( 
+      ` + q + ` 
+      )
+   `
+	repo.alias = alias
+	r.withs = append(r.withs, repo)
+	r.filterArgs = helper.MergeMaps(r.filterArgs,f)
 	return r
 }
 
@@ -109,17 +116,6 @@ func (r *ArangoQuery) JoinEdge(from, fromKey, edge, alias, direction string) *Ar
 	`
 
 	r.joins = append(r.joins, alias)
-
-	return r
-}
-
-func (r *ArangoQuery) WithEdge(from, fromKey, edge, alias, direction string) *ArangoQuery {
-	r.query += ` LET ` + alias + ` = (
-		FOR ` + alias + ` IN ` + direction + " " + from + "." + fromKey + " " + edge + `
-		RETURN ` + alias + ` 
-	)`
-
-	r.withs = append(r.withs, alias)
 
 	return r
 }
@@ -166,10 +162,15 @@ func (r *ArangoQuery) Raw() (string, map[string]interface{}) {
 	if len(r.withs) > 0 {
 		returnData += "{"
 		for index, with := range r.withs {
+			alias := with.alias
+			if with.first{
+				alias =" FIRST(" + alias + ") "
+			}
+
 			if index == 0 {
-				returnData += with + " :" + with
+				returnData += with.alias + " :" + alias
 			} else {
-				returnData += ", " + with + " :" + with
+				returnData += ", " + with.alias + " :" + alias
 			}
 		}
 		returnData += "}, "
@@ -205,7 +206,7 @@ func (r *ArangoQuery) clearQuery() {
 	r.query = ""
 	r.filterArgs = make(map[string]interface{})
 	r.joins = []string{}
-	r.withs = []string{}
+	r.withs = nil
 	r.sortField = ""
 	r.sortOrder = ""
 	r.offset = 0

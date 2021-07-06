@@ -29,18 +29,18 @@ func (r *ArangoBaseRepository) Join(from, fromKey, To, toKey string) *ArangoBase
 	return r
 }
 
-func (r *ArangoBaseRepository) With(from, fromKey, to, toKey, alias string) *ArangoBaseRepository {
-	r.ArangoQuery = *r.ArangoQuery.With(from, fromKey, to, toKey, alias)
+func (r *ArangoBaseRepository) WithOne(repo *ArangoQuery, alias string) *ArangoBaseRepository {
+	r.ArangoQuery = *r.ArangoQuery.WithOne(repo, alias)
+	return r
+}
+
+func (r *ArangoBaseRepository) WithMany(repo *ArangoQuery, alias string) *ArangoBaseRepository {
+	r.ArangoQuery = *r.ArangoQuery.WithMany(repo, alias)
 	return r
 }
 
 func (r *ArangoBaseRepository) JoinEdge(from, fromKey, edge, alias, direction string) *ArangoBaseRepository {
 	r.ArangoQuery = *r.ArangoQuery.JoinEdge(from, fromKey, edge, alias, direction)
-	return r
-}
-
-func (r *ArangoBaseRepository) WithEdge(from, fromKey, edge, alias, direction string) *ArangoBaseRepository {
-	r.ArangoQuery = *r.ArangoQuery.WithEdge(from, fromKey, edge, alias, direction)
 	return r
 }
 
