@@ -24,16 +24,16 @@ type ArangoBaseRepositoryInterface interface {
 	Delete(c context.Context, request ArangoInterface) error
 
 	// Eloquent Style
-	Where(column string, operator string, value interface{}) *ArangoBaseRepository
-	WhereOr(column string, operator string, value interface{}) *ArangoBaseRepository
-	WhereColumn(column string, operator string, value string) *ArangoBaseRepository
-	Join(from, fromKey, To, toKey string) *ArangoBaseRepository
-	With(from, fromKey, to, toKey, alias string) *ArangoBaseRepository
-	JoinEdge(from, fromKey, edge, alias, direction string) *ArangoBaseRepository
-	WithEdge(from, fromKey, edge, alias, direction string) *ArangoBaseRepository
-	Offset(offset int) *ArangoBaseRepository
-	Limit(limit int) *ArangoBaseRepository
-	Sort(sortField, sortOrder string) *ArangoBaseRepository
+	Where(column string, operator string, value interface{}) *ArangoQuery
+	WhereOr(column string, operator string, value interface{}) *ArangoQuery
+	WhereColumn(column string, operator string, value string) *ArangoQuery
+	Join(from, fromKey, To, toKey string) *ArangoQuery
+	With(from, fromKey, to, toKey, alias string) *ArangoQuery
+	JoinEdge(from, fromKey, edge, alias, direction string) *ArangoQuery
+	WithEdge(from, fromKey, edge, alias, direction string) *ArangoQuery
+	Offset(offset int) *ArangoQuery
+	Limit(limit int) *ArangoQuery
+	Sort(sortField, sortOrder string) *ArangoQuery
 	Get(request interface{}) error
 	Raw() (string, map[string]interface{})
 	executeQuery(request interface{}) error
@@ -43,21 +43,16 @@ type ArangoBaseRepositoryInterface interface {
 type ArangoBaseRepository struct {
 	ArangoDB   ArangoDB
 	Collection string
-
-	query      string
-	filterArgs map[string]interface{}
-	joins      []string
-	withs      []string
-	sortField  string
-	sortOrder  string
-	offset     int
-	limit      int
+	ArangoQuery
 }
 
 func NewArangoBaseRepository(arangoDB ArangoDB, collection string) ArangoBaseRepositoryInterface {
 	return &ArangoBaseRepository{
 		ArangoDB:   arangoDB,
 		Collection: collection,
+		ArangoQuery: ArangoQuery{
+			collection: collection,
+		},
 	}
 }
 
