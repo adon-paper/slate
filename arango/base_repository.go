@@ -24,18 +24,19 @@ type ArangoBaseRepositoryInterface interface {
 	Delete(c context.Context, request ArangoInterface) error
 
 	// Eloquent Style
-	Where(column string, operator string, value interface{}) *ArangoQuery
-	WhereOr(column string, operator string, value interface{}) *ArangoQuery
-	WhereColumn(column string, operator string, value string) *ArangoQuery
-	Join(from, fromKey, To, toKey string) *ArangoQuery
-	WithMany(repo *ArangoQuery, alias string) *ArangoQuery
-	WithOne(repo *ArangoQuery, alias string) *ArangoQuery
-	JoinEdge(from, fromKey, edge, alias, direction string) *ArangoQuery
-	Offset(offset int) *ArangoQuery
-	Limit(limit int) *ArangoQuery
-	Sort(sortField, sortOrder string) *ArangoQuery
+	Where(column string, operator string, value interface{}) *ArangoBaseRepository
+	WhereOr(column string, operator string, value interface{}) *ArangoBaseRepository
+	WhereColumn(column string, operator string, value string) *ArangoBaseRepository
+	Join(from, fromKey, To, toKey string) *ArangoBaseRepository
+	WithMany(repo *ArangoQuery, alias string) *ArangoBaseRepository
+	WithOne(repo *ArangoQuery, alias string) *ArangoBaseRepository
+	JoinEdge(from, fromKey, edge, alias, direction string) *ArangoBaseRepository
+	Offset(offset int) *ArangoBaseRepository
+	Limit(limit int) *ArangoBaseRepository
+	Sort(sortField, sortOrder string) *ArangoBaseRepository
 	Get(request interface{}) error
 	Raw() (string, map[string]interface{})
+	Count(request interface{}) error
 	executeQuery(request interface{}) error
 	clearQuery()
 }

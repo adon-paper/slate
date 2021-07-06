@@ -87,13 +87,13 @@ func (r *ArangoQuery) Join(from, fromKey, To, toKey string) *ArangoQuery {
 }
 
 func (r *ArangoQuery) WithOne(repo *ArangoQuery, alias string) *ArangoQuery {
-	r.first = false
+	r.first = true
 	r.with(repo,alias)
 	return r
 }
 
 func (r *ArangoQuery) WithMany(repo *ArangoQuery, alias string) *ArangoQuery {
-	r.first = true
+	r.first = false
 	r.with(repo,alias)
 	return r
 }
@@ -145,14 +145,6 @@ func (r *ArangoQuery) Sort(sortField, sortOrder string) *ArangoQuery {
 	}
 
 	return r
-}
-
-
-func (r *ArangoQuery) Get(request interface{}) error {
-
-	r.query, r.filterArgs = r.Raw()
-
-	return nil
 }
 
 func (r *ArangoQuery) Raw() (string, map[string]interface{}) {
