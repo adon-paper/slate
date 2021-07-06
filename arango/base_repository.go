@@ -22,11 +22,36 @@ type ArangoBaseRepositoryInterface interface {
 	Create(c context.Context, request ArangoInterface) error
 	Update(c context.Context, request ArangoInterface) error
 	Delete(c context.Context, request ArangoInterface) error
+
+	// Eloquent Style
+	Where(column string, operator string, value interface{}) *ArangoBaseRepository
+	WhereOr(column string, operator string, value interface{}) *ArangoBaseRepository
+	WhereColumn(column string, operator string, value string) *ArangoBaseRepository
+	Join(from, fromKey, To, toKey string) *ArangoBaseRepository
+	With(from, fromKey, to, toKey, alias string) *ArangoBaseRepository
+	JoinEdge(from, fromKey, edge, alias, direction string) *ArangoBaseRepository
+	WithEdge(from, fromKey, edge, alias, direction string) *ArangoBaseRepository
+	Offset(offset int) *ArangoBaseRepository
+	Limit(limit int) *ArangoBaseRepository
+	Sort(sortField, sortOrder string) *ArangoBaseRepository
+	Get(request interface{}) error
+	Raw() (string, map[string]interface{})
+	executeQuery(request interface{}) error
+	clearQuery()
 }
 
 type ArangoBaseRepository struct {
 	ArangoDB   ArangoDB
 	Collection string
+
+	query      string
+	filterArgs map[string]interface{}
+	joins      []string
+	withs      []string
+	sortField  string
+	sortOrder  string
+	offset     int
+	limit      int
 }
 
 func NewArangoBaseRepository(arangoDB ArangoDB, collection string) ArangoBaseRepositoryInterface {
@@ -58,10 +83,10 @@ func (r *ArangoBaseRepository) parseFilterToQuery(queryBuilder ArangoQueryBuilde
 			}
 
 			filterQuery += " " + keyword + " " + filter.Key + ` ` + filter.Operator + ` @` + queryBuilder.Alias + filter.ArgumentKey
-			filterArgs[filter.ArgumentKey + queryBuilder.Alias] = filter.Value
+			filterArgs[filter.ArgumentKey+queryBuilder.Alias] = filter.Value
 		} else {
 			filterQuery += " " + keyword + " " + filter.CustomFilter
-			filterArgs[filter.ArgumentKey + queryBuilder.Alias] = filter.Value
+			filterArgs[filter.ArgumentKey+queryBuilder.Alias] = filter.Value
 		}
 	}
 
@@ -69,12 +94,12 @@ func (r *ArangoBaseRepository) parseFilterToQuery(queryBuilder ArangoQueryBuilde
 }
 
 func (r *ArangoBaseRepository) parseJoinToQuery(queryBuilder ArangoQueryBuilder) (string, string) {
-	var joinQuery,resultQuery string
+	var joinQuery, resultQuery string
 
 	if len(queryBuilder.Joins) > 0 {
 		joinQuery += " FILTER data != null "
 
-		for index, join := range queryBuilder.Joins {
+		for _, join := range queryBuilder.Joins {
 			if join.CollectionFrom != r.Collection {
 				join.FromKey = "data_" + join.CollectionFrom + "." + join.FromKey
 			} else {
@@ -88,16 +113,8 @@ func (r *ArangoBaseRepository) parseJoinToQuery(queryBuilder ArangoQueryBuilder)
 				join.ResultKey = join.CollectionTo
 			}
 
-			if index == 0 {
-
-				resultQuery = `
-				` + r.Collection + `: data,
-				` + join.ResultKey + ": data_" + join.CollectionTo
-			} else {
-
-				resultQuery += `,
+			resultQuery += `,
 			` + join.ResultKey + ": data_" + join.CollectionTo
-			}
 		}
 	}
 
@@ -111,13 +128,13 @@ func (r *ArangoBaseRepository) parseWithToQuery(queryBuilder ArangoQueryBuilder)
 
 		for index, with := range queryBuilder.With {
 			withQuery += " LET " + with.Alias + " =( "
-			if with.Alias == ""{
+			if with.Alias == "" {
 				with.Alias = with.Collection + string(rune(index))
 			}
 			_, query, filterArgs = r.buildQuery(with)
 			withQuery += " " + query + " ) "
-			resultQuery += with.Alias + ":" + with.Alias
-			if index != len(queryBuilder.With) -1 {
+			resultQuery += "," + with.Alias + ":" + with.Alias
+			if index != len(queryBuilder.With)-1 {
 				resultQuery += ","
 			}
 		}
@@ -132,20 +149,22 @@ func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (stri
 	joinQuery, joinQueryResultQuery := r.parseJoinToQuery(queryBuilder)
 	withQuery, withQueryResultQuery, withFilterArgs := r.parseWithToQuery(queryBuilder)
 
+	var resultAlias string
+
 	alias := "data"
-	if queryBuilder.Alias != ""{
+	if queryBuilder.Alias != "" {
 		alias = queryBuilder.Alias
+		resultAlias = queryBuilder.Alias
+	} else {
+		resultAlias = r.Collection + ": data"
 	}
 
-	resultQuery:= alias
-	if joinQueryResultQuery != "" || withQueryResultQuery != ""{
-		if joinQueryResultQuery != "" && withQueryResultQuery != ""{
-			joinQueryResultQuery += ","
-		}
-		resultQuery =" { " + alias + "," + joinQueryResultQuery + withQueryResultQuery + " } "
+	resultQuery := resultAlias
+	if joinQueryResultQuery != "" || withQueryResultQuery != "" {
+		resultQuery = " { " + resultAlias + joinQueryResultQuery + withQueryResultQuery + " } "
 	}
 
-	for index, withFilterArg := range withFilterArgs{
+	for index, withFilterArg := range withFilterArgs {
 		filterArgs[index] = withFilterArg
 	}
 
@@ -177,14 +196,14 @@ func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (stri
 
 		query = `
 			FOR ` + alias + ` IN ` + collection +
-			joinQuery + " " + filterQuery +	withQuery +
-			" LIMIT " + strconv.Itoa(queryBuilder.First) + ", " + strconv.Itoa(queryBuilder.Rows) + sort +`
+			joinQuery + " " + filterQuery + withQuery +
+			" LIMIT " + strconv.Itoa(queryBuilder.First) + ", " + strconv.Itoa(queryBuilder.Rows) + sort + `
 			RETURN ` + resultQuery
 
 	} else {
 		query = withQuery + `
-		FOR `+ alias +` IN ` + collection +
-			joinQuery + " " + filterQuery + sort +`
+		FOR ` + alias + ` IN ` + collection +
+			joinQuery + " " + filterQuery + sort + `
 		RETURN ` + resultQuery
 	}
 
@@ -335,7 +354,7 @@ func (r *ArangoBaseRepository) RawAll(c context.Context, queryBuilder ArangoQuer
 }
 
 func (r *ArangoBaseRepository) RawQuery(c context.Context, queryBuilder ArangoQueryBuilder) (string, string, map[string]interface{}) {
-	return  r.buildQuery(queryBuilder)
+	return r.buildQuery(queryBuilder)
 }
 
 func (r *ArangoBaseRepository) Create(c context.Context, request ArangoInterface) error {

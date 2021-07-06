@@ -46,6 +46,10 @@ func InitArangoDB(host, database, username, password string, context context.Con
 	}, nil
 }
 
+func InitArangoDBTest() (ArangoDB, error) {
+	return &arangoDB{}, nil
+}
+
 func connect(database string, client driver.Client, c context.Context) (driver.Database, error) {
 	ctx := driver.WithQueryCount(c)
 	db, err := client.Database(ctx, database)
