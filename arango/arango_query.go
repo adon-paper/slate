@@ -151,13 +151,6 @@ func (r *ArangoQuery) Sort(sortField, sortOrder string) *ArangoQuery {
 	return r
 }
 
-func (r *ArangoQuery) Get(request interface{}) error {
-
-	r.query, r.filterArgs = r.Raw()
-
-	return nil
-}
-
 func (r *ArangoQuery) Raw() (string, map[string]interface{}) {
 	var (
 		returnData string
