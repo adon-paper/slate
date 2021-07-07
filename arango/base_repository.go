@@ -95,7 +95,7 @@ func (r *ArangoBaseRepository) parseJoinToQuery(queryBuilder ArangoQueryBuilder)
 	if len(queryBuilder.Joins) > 0 {
 		joinQuery += " FILTER data != null "
 
-		for _, join := range queryBuilder.Joins {
+		for index, join := range queryBuilder.Joins {
 			if join.CollectionFrom != r.Collection {
 				join.FromKey = "data_" + join.CollectionFrom + "." + join.FromKey
 			} else {
@@ -109,8 +109,16 @@ func (r *ArangoBaseRepository) parseJoinToQuery(queryBuilder ArangoQueryBuilder)
 				join.ResultKey = join.CollectionTo
 			}
 
-			resultQuery += `,
+			if index == 0 {
+
+				resultQuery = `
+				` + r.Collection + `: data,
+				` + join.ResultKey + ": data_" + join.CollectionTo
+			} else {
+
+				resultQuery += `,
 			` + join.ResultKey + ": data_" + join.CollectionTo
+			}
 		}
 	}
 
@@ -129,7 +137,7 @@ func (r *ArangoBaseRepository) parseWithToQuery(queryBuilder ArangoQueryBuilder)
 			}
 			_, query, filterArgs = r.buildQuery(with)
 			withQuery += " " + query + " ) "
-			resultQuery += "," + with.Alias + ":" + with.Alias
+			resultQuery += with.Alias + ":" + with.Alias
 			if index != len(queryBuilder.With)-1 {
 				resultQuery += ","
 			}
@@ -145,19 +153,17 @@ func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (stri
 	joinQuery, joinQueryResultQuery := r.parseJoinToQuery(queryBuilder)
 	withQuery, withQueryResultQuery, withFilterArgs := r.parseWithToQuery(queryBuilder)
 
-	var resultAlias string
-
 	alias := "data"
 	if queryBuilder.Alias != "" {
 		alias = queryBuilder.Alias
-		resultAlias = queryBuilder.Alias
-	} else {
-		resultAlias = r.Collection + ": data"
 	}
 
-	resultQuery := resultAlias
+	resultQuery := alias
 	if joinQueryResultQuery != "" || withQueryResultQuery != "" {
-		resultQuery = " { " + resultAlias + joinQueryResultQuery + withQueryResultQuery + " } "
+		if joinQueryResultQuery != "" && withQueryResultQuery != "" {
+			joinQueryResultQuery += ","
+		}
+		resultQuery = " { " + alias + "," + joinQueryResultQuery + withQueryResultQuery + " } "
 	}
 
 	for index, withFilterArg := range withFilterArgs {
