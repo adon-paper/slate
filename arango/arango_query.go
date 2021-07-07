@@ -2,9 +2,10 @@ package arango
 
 import (
 	"fmt"
-	"github.com/noldwidjaja/slate/helper"
 	"strconv"
 	"strings"
+
+	"github.com/noldwidjaja/slate/helper"
 )
 
 type ArangoQuery struct {
@@ -17,8 +18,8 @@ type ArangoQuery struct {
 	sortOrder  string
 	offset     int
 	limit      int
-	first 	   bool
-	alias 	   string
+	first      bool
+	alias      string
 }
 
 func SubQuery(collection string) *ArangoQuery {
@@ -69,9 +70,9 @@ func (r *ArangoQuery) WhereOr(column string, operator string, value interface{})
 
 func (r *ArangoQuery) WhereColumn(column string, operator string, value string) *ArangoQuery {
 	if strings.Contains(column, ".") {
-		r.query += " OR " + column + " " + operator + " " + value
+		r.query += " FILTER " + column + " " + operator + " " + value
 	} else {
-		r.query += " OR " + r.collection + "." + column + " " + operator + " " + value
+		r.query += " FILTER " + r.collection + "." + column + " " + operator + " " + value
 	}
 	return r
 }
@@ -88,25 +89,25 @@ func (r *ArangoQuery) Join(from, fromKey, To, toKey string) *ArangoQuery {
 
 func (r *ArangoQuery) WithOne(repo *ArangoQuery, alias string) *ArangoQuery {
 	r.first = true
-	r.with(repo,alias)
+	r.with(repo, alias)
 	return r
 }
 
 func (r *ArangoQuery) WithMany(repo *ArangoQuery, alias string) *ArangoQuery {
 	r.first = false
-	r.with(repo,alias)
+	r.with(repo, alias)
 	return r
 }
 
 func (r *ArangoQuery) with(repo *ArangoQuery, alias string) *ArangoQuery {
-	q,f := repo.Raw()
+	q, f := repo.Raw()
 	r.query += ` LET ` + alias + ` = ( 
       ` + q + ` 
       )
    `
 	repo.alias = alias
 	r.withs = append(r.withs, repo)
-	r.filterArgs = helper.MergeMaps(r.filterArgs,f)
+	r.filterArgs = helper.MergeMaps(r.filterArgs, f)
 	return r
 }
 
@@ -163,8 +164,8 @@ func (r *ArangoQuery) Raw() (string, map[string]interface{}) {
 		returnData += "{"
 		for index, with := range r.withs {
 			alias := with.alias
-			if with.first{
-				alias =" FIRST(" + alias + ") "
+			if with.first {
+				alias = " FIRST(" + alias + ") "
 			}
 
 			if index == 0 {
