@@ -87,7 +87,7 @@ func (r *ArangoQuery) WhereOr(column string, operator string, value interface{})
 }
 
 func (r *ArangoQuery) WhereColumn(column string, operator string, value string) *ArangoQuery {
-	if strings.Contains(column, ".") {
+	if strings.Contains(column, ".") || strings.Contains(column, "'") {
 		r.query += " FILTER " + column + " " + operator + " " + value
 	} else {
 		r.query += " FILTER " + r.collection + "." + column + " " + operator + " " + value
