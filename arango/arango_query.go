@@ -8,11 +8,28 @@ import (
 	"github.com/noldwidjaja/slate/helper"
 )
 
+type (
+	traversalDirection string
+)
+
+const (
+	INBOUND  traversalDirection = "INBOUND"
+	OUTBOUND traversalDirection = "OUTBOUND"
+	ANY      traversalDirection = "ANY"
+)
+
+type arangoQueryTraversal struct {
+	enabled   bool
+	direction traversalDirection
+	sourceId  string
+}
+
 type ArangoQuery struct {
 	collection string
+	traversal  arangoQueryTraversal
 	query      string
 	filterArgs map[string]interface{}
-	joins      []string
+	joins      []*ArangoQuery
 	withs      []*ArangoQuery
 	sortField  string
 	sortOrder  string
@@ -25,6 +42,7 @@ type ArangoQuery struct {
 func SubQuery(collection string) *ArangoQuery {
 	return &ArangoQuery{
 		collection: collection,
+		alias:      collection,
 	}
 }
 
@@ -77,13 +95,12 @@ func (r *ArangoQuery) WhereColumn(column string, operator string, value string) 
 	return r
 }
 
-func (r *ArangoQuery) Join(from, fromKey, To, toKey string) *ArangoQuery {
-	r.query += ` FOR ` + To + ` IN ` + To + `
-		FILTER ` + To + "." + toKey + "==" + from + "." + fromKey + `
-	`
+func (r *ArangoQuery) Join(query *ArangoQuery) *ArangoQuery {
+	q, f := query.toQueryWithoutReturn()
+	r.query += q
 
-	r.joins = append(r.joins, To)
-
+	r.joins = append(r.joins, query)
+	r.filterArgs = helper.MergeMaps(r.filterArgs, f)
 	return r
 }
 
@@ -99,25 +116,16 @@ func (r *ArangoQuery) WithMany(repo *ArangoQuery, alias string) *ArangoQuery {
 	return r
 }
 
-func (r *ArangoQuery) with(repo *ArangoQuery, alias string) *ArangoQuery {
-	q, f := repo.Raw()
+func (r *ArangoQuery) with(query *ArangoQuery, alias string) *ArangoQuery {
+	query.alias = alias
+	q, f := query.ToQuery()
 	r.query += ` LET ` + alias + ` = ( 
       ` + q + ` 
       )
    `
-	repo.alias = alias
-	r.withs = append(r.withs, repo)
+
+	r.withs = append(r.withs, query)
 	r.filterArgs = helper.MergeMaps(r.filterArgs, f)
-	return r
-}
-
-func (r *ArangoQuery) JoinEdge(from, fromKey, edge, alias, direction string) *ArangoQuery {
-	r.query += `
-		FOR ` + alias + ` IN ` + direction + " " + from + "." + fromKey + " " + edge + `
-	`
-
-	r.joins = append(r.joins, alias)
-
 	return r
 }
 
@@ -148,68 +156,135 @@ func (r *ArangoQuery) Sort(sortField, sortOrder string) *ArangoQuery {
 	return r
 }
 
-func (r *ArangoQuery) Raw() (string, map[string]interface{}) {
+func (r *ArangoQuery) Traversal(source string, direction traversalDirection) *ArangoQuery {
+	r.traversal.enabled = true
+	r.traversal.direction = direction
+	r.traversal.sourceId = source
+
+	return r
+}
+
+func (r *ArangoQuery) toQueryWithoutReturn() (string, map[string]interface{}) {
+	var (
+		limitQuery string
+		sortQuery  string
+		finalQuery string
+	)
+
+	if r.limit > 0 {
+		limitQuery = fmt.Sprintf("LIMIT %s,%s", strconv.Itoa(r.offset), strconv.Itoa(r.limit))
+	}
+
+	if r.sortField != "" {
+		sortQuery = fmt.Sprintf("SORT %s %s", r.sortField, r.sortOrder)
+	}
+
+	if r.traversal.enabled {
+		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s %s %s ",
+			r.alias,
+			r.traversal.direction,
+			r.traversal.sourceId,
+			r.collection,
+			r.query,
+			limitQuery,
+			sortQuery,
+		)
+	} else {
+		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s ",
+			r.alias,
+			r.collection,
+			r.query,
+			limitQuery,
+			sortQuery,
+		)
+	}
+
+	args := r.filterArgs
+
+	return finalQuery, args
+}
+
+func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 	var (
 		returnData string
 		limitQuery string
 		sortQuery  string
+		finalQuery string
 	)
 
 	returnData = "MERGE("
-	for _, join := range r.joins {
-		returnData += join + ", "
-	}
 
 	if len(r.withs) > 0 {
 		returnData += "{"
 		for index, with := range r.withs {
 			alias := with.alias
 			if with.first {
-				alias = " FIRST(" + alias + ") "
+				alias = fmt.Sprintf(" FIRST(%s) ", alias)
 			}
 
 			if index == 0 {
-				returnData += with.alias + " :" + alias
+				returnData += fmt.Sprintf("%s :%s", with.alias, alias)
 			} else {
-				returnData += ", " + with.alias + " :" + alias
+				returnData += fmt.Sprintf(", %s :%s", with.alias, alias)
 			}
 		}
 		returnData += "}, "
 	}
 
-	returnData += r.collection + ")"
+	if len(r.joins) > 0 {
+		for _, join := range r.joins {
+			returnData += fmt.Sprintf("%s, ", join.collection)
+		}
+	}
+
+	returnData += fmt.Sprintf("%s)", r.collection)
 
 	if r.limit > 0 {
-		limitQuery = "LIMIT " + strconv.Itoa(r.offset) + "," + strconv.Itoa(r.limit)
+		limitQuery = fmt.Sprintf("LIMIT %s,%s", strconv.Itoa(r.offset), strconv.Itoa(r.limit))
 	}
 
 	if r.sortField != "" {
-		sortQuery = "SORT " + r.sortField + " " + r.sortOrder
+		sortQuery = fmt.Sprintf("SORT %s %s", r.sortField, r.sortOrder)
 	}
 
-	rawQuery := fmt.Sprintf("FOR %s in %s %s %s %s RETURN %s",
-		r.collection,
-		r.collection,
-		r.query,
-		limitQuery,
-		sortQuery,
-		returnData,
-	)
+	if r.traversal.enabled {
+		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s %s %s RETURN %s",
+			r.alias,
+			r.traversal.direction,
+			r.traversal.sourceId,
+			r.collection,
+			r.query,
+			limitQuery,
+			sortQuery,
+			returnData,
+		)
+	} else {
+		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s RETURN %s",
+			r.alias,
+			r.collection,
+			r.query,
+			limitQuery,
+			sortQuery,
+			returnData,
+		)
+	}
 
 	args := r.filterArgs
 
 	r.clearQuery()
 
-	return rawQuery, args
+	return finalQuery, args
 }
 
 func (r *ArangoQuery) clearQuery() {
 	r.query = ""
 	r.filterArgs = make(map[string]interface{})
-	r.joins = []string{}
+	r.joins = nil
 	r.withs = nil
 	r.sortField = ""
 	r.sortOrder = ""
 	r.offset = 0
 	r.limit = 0
+	r.alias = r.collection
+	r.traversal = arangoQueryTraversal{}
 }

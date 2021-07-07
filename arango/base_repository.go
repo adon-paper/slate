@@ -27,15 +27,17 @@ type ArangoBaseRepositoryInterface interface {
 	Where(column string, operator string, value interface{}) *ArangoBaseRepository
 	WhereOr(column string, operator string, value interface{}) *ArangoBaseRepository
 	WhereColumn(column string, operator string, value string) *ArangoBaseRepository
-	Join(from, fromKey, To, toKey string) *ArangoBaseRepository
+	// Join(from, fromKey, To, toKey string) *ArangoBaseRepository
+	// JoinEdge(from, fromKey, edge, alias, direction string) *ArangoBaseRepository
+	Join(query *ArangoQuery) *ArangoBaseRepository
 	WithMany(repo *ArangoQuery, alias string) *ArangoBaseRepository
 	WithOne(repo *ArangoQuery, alias string) *ArangoBaseRepository
-	JoinEdge(from, fromKey, edge, alias, direction string) *ArangoBaseRepository
 	Offset(offset int) *ArangoBaseRepository
 	Limit(limit int) *ArangoBaseRepository
 	Sort(sortField, sortOrder string) *ArangoBaseRepository
+	Traversal(sourceId string, direction traversalDirection) *ArangoBaseRepository
 	Get(request interface{}) error
-	Raw() (string, map[string]interface{})
+	ToQuery() (string, map[string]interface{})
 	Count(request interface{}) error
 	executeQuery(request interface{}) error
 	clearQuery()
@@ -53,6 +55,7 @@ func NewArangoBaseRepository(arangoDB ArangoDB, collection string) ArangoBaseRep
 		Collection: collection,
 		ArangoQuery: ArangoQuery{
 			collection: collection,
+			alias:      collection,
 		},
 	}
 }

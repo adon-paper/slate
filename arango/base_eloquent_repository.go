@@ -24,11 +24,6 @@ func (r *ArangoBaseRepository) WhereColumn(column string, operator string, value
 	return r
 }
 
-func (r *ArangoBaseRepository) Join(from, fromKey, To, toKey string) *ArangoBaseRepository {
-	r.ArangoQuery = *r.ArangoQuery.Join(from, fromKey, To, toKey)
-	return r
-}
-
 func (r *ArangoBaseRepository) WithOne(repo *ArangoQuery, alias string) *ArangoBaseRepository {
 	r.ArangoQuery = *r.ArangoQuery.WithOne(repo, alias)
 	return r
@@ -39,8 +34,8 @@ func (r *ArangoBaseRepository) WithMany(repo *ArangoQuery, alias string) *Arango
 	return r
 }
 
-func (r *ArangoBaseRepository) JoinEdge(from, fromKey, edge, alias, direction string) *ArangoBaseRepository {
-	r.ArangoQuery = *r.ArangoQuery.JoinEdge(from, fromKey, edge, alias, direction)
+func (r *ArangoBaseRepository) Join(query *ArangoQuery) *ArangoBaseRepository {
+	r.ArangoQuery = *r.ArangoQuery.Join(query)
 	return r
 }
 
@@ -59,8 +54,8 @@ func (r *ArangoBaseRepository) Sort(sortField, sortOrder string) *ArangoBaseRepo
 	return r
 }
 
-func (r *ArangoBaseRepository) Raw() (string, map[string]interface{}) {
-	return r.ArangoQuery.Raw()
+func (r *ArangoBaseRepository) ToQuery() (string, map[string]interface{}) {
+	return r.ArangoQuery.ToQuery()
 }
 
 func (r *ArangoBaseRepository) clearQuery() {
@@ -68,9 +63,14 @@ func (r *ArangoBaseRepository) clearQuery() {
 	r.collection = r.Collection
 }
 
+func (r *ArangoBaseRepository) Traversal(sourceId string, direction traversalDirection) *ArangoBaseRepository {
+	r.ArangoQuery = *r.ArangoQuery.Traversal(sourceId, direction)
+	return r
+}
+
 func (r *ArangoBaseRepository) Get(request interface{}) error {
 
-	r.query, r.filterArgs = r.Raw()
+	r.query, r.filterArgs = r.ToQuery()
 
 	return r.executeQuery(request)
 }
