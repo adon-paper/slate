@@ -233,11 +233,11 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 
 	if len(r.joins) > 0 {
 		for _, join := range r.joins {
-			returnData += fmt.Sprintf("%s, ", join.collection)
+			returnData += fmt.Sprintf("%s, ", join.alias)
 		}
 	}
 
-	returnData += fmt.Sprintf("%s)", r.collection)
+	returnData += fmt.Sprintf("%s)", r.alias)
 
 	if r.limit > 0 {
 		limitQuery = fmt.Sprintf("LIMIT %s,%s", strconv.Itoa(r.offset), strconv.Itoa(r.limit))
@@ -270,8 +270,6 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 	}
 
 	args := r.filterArgs
-
-	r.clearQuery()
 
 	return finalQuery, args
 }

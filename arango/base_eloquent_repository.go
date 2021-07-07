@@ -101,8 +101,6 @@ func (r *ArangoBaseRepository) executeQuery(request interface{}) error {
 
 	ctx := driver.WithQueryCount(c)
 
-	fmt.Println(r.query)
-
 	data, err := r.ArangoDB.DB().Query(ctx, r.query, r.filterArgs)
 	if err != nil {
 		fmt.Println(err)
