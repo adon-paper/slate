@@ -84,7 +84,7 @@ func (r *ArangoBaseRepository) Count(request interface{}) error {
 
 	returnData = "COLLECT WITH COUNT INTO total RETURN total"
 
-	r.query = fmt.Sprintf("FOR %s in %s %s %s %s RETURN %s",
+	r.query = fmt.Sprintf("FOR %s in %s %s %s %s %s",
 		r.collection,
 		r.collection,
 		r.query,
