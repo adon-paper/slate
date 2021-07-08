@@ -3,6 +3,7 @@ package arango
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -65,6 +66,11 @@ func (r *ArangoBaseRepository) clearQuery() {
 
 func (r *ArangoBaseRepository) Traversal(sourceId string, direction traversalDirection) *ArangoBaseRepository {
 	r.ArangoQuery = *r.ArangoQuery.Traversal(sourceId, direction)
+	return r
+}
+
+func (r *ArangoBaseRepository) Returns(returns ...string) *ArangoBaseRepository {
+	r.ArangoQuery = *r.ArangoQuery.Returns(returns...)
 	return r
 }
 
@@ -131,5 +137,5 @@ func (r *ArangoBaseRepository) executeQuery(request interface{}) error {
 		return nil
 	}
 
-	return nil
+	return errors.New("not found")
 }

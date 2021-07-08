@@ -31,6 +31,7 @@ type ArangoQuery struct {
 	filterArgs map[string]interface{}
 	joins      []*ArangoQuery
 	withs      []*ArangoQuery
+	returns    string
 	sortField  string
 	sortOrder  string
 	offset     int
@@ -164,6 +165,26 @@ func (r *ArangoQuery) Traversal(source string, direction traversalDirection) *Ar
 	return r
 }
 
+func (r *ArangoQuery) Returns(returns ...string) *ArangoQuery {
+	r.returns = "MERGE("
+
+	for index, ret := range returns {
+		if strings.Contains(ret, ":") {
+			r.returns += fmt.Sprintf("{%s}", ret)
+		} else {
+			r.returns += ret
+		}
+
+		if len(returns) != index+1 {
+			r.returns += ", "
+		}
+	}
+
+	r.returns += ")"
+
+	return r
+}
+
 func (r *ArangoQuery) toQueryWithoutReturn() (string, map[string]interface{}) {
 	var (
 		limitQuery string
@@ -212,32 +233,36 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 		finalQuery string
 	)
 
-	returnData = "MERGE("
+	if r.returns == "" {
+		returnData = "MERGE("
 
-	if len(r.withs) > 0 {
-		returnData += "{"
-		for index, with := range r.withs {
-			alias := with.alias
-			if with.first {
-				alias = fmt.Sprintf(" FIRST(%s) ", alias)
+		if len(r.withs) > 0 {
+			returnData += "{"
+			for index, with := range r.withs {
+				alias := with.alias
+				if with.first {
+					alias = fmt.Sprintf(" FIRST(%s) ", alias)
+				}
+
+				if index == 0 {
+					returnData += fmt.Sprintf("%s :%s", with.alias, alias)
+				} else {
+					returnData += fmt.Sprintf(", %s :%s", with.alias, alias)
+				}
 			}
+			returnData += "}, "
+		}
 
-			if index == 0 {
-				returnData += fmt.Sprintf("%s :%s", with.alias, alias)
-			} else {
-				returnData += fmt.Sprintf(", %s :%s", with.alias, alias)
+		if len(r.joins) > 0 {
+			for _, join := range r.joins {
+				returnData += fmt.Sprintf("%s, ", join.alias)
 			}
 		}
-		returnData += "}, "
-	}
 
-	if len(r.joins) > 0 {
-		for _, join := range r.joins {
-			returnData += fmt.Sprintf("%s, ", join.alias)
-		}
+		returnData += fmt.Sprintf("%s)", r.alias)
+	} else {
+		returnData = r.returns
 	}
-
-	returnData += fmt.Sprintf("%s)", r.alias)
 
 	if r.limit > 0 {
 		limitQuery = fmt.Sprintf("LIMIT %s,%s", strconv.Itoa(r.offset), strconv.Itoa(r.limit))
@@ -281,6 +306,7 @@ func (r *ArangoQuery) clearQuery() {
 	r.withs = nil
 	r.sortField = ""
 	r.sortOrder = ""
+	r.returns = ""
 	r.offset = 0
 	r.limit = 0
 	r.alias = r.collection
