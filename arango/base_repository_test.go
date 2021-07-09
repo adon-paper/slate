@@ -15,14 +15,19 @@ func TestArango(t *testing.T) {
 	q, _ = repo.WithMany(
 		SubQuery("has_payment_request").
 			Traversal("paper_chain_payment_requests._id", "ANY").
-			Returns("invoice_id:invoices._id", "number:invoices.document_number"),
+			Returns(
+				"amount_due:has_payment_request.document_info.amount_due",
+				"due_date:has_payment_request.document_info.due_date",
+				"grand_total:has_payment_request.document_info.totals.grandTotalUnformatted",
+				"invoice_id:has_payment_request.document_info.uuid",
+				"invoice_number:has_payment_request.document_number",
+				"status:has_payment_request.document_info.status",
+			),
 		"invoices",
-	).Returns(
-		"buyer_id:paper_chain_payment_requests.buyer_id",
-		"pr_id:paper_chain_payment_requests._id",
-		"pr_key:paper_chain_payment_requests._key",
-		"full_pr:paper_chain_payment_requests",
-		"invoices:invoices",
+	).WithOne(
+		SubQuery("companies").
+			WhereColumn("uuid", "==", "paper_chain_payment_requests.supplier_id").Returns("name: companies.company_name"),
+		"supplier",
 	).
 		ToQuery()
 

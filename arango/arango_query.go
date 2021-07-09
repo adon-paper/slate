@@ -49,9 +49,9 @@ func SubQuery(collection string) *ArangoQuery {
 
 func (r *ArangoQuery) Where(column string, operator string, value interface{}) *ArangoQuery {
 	if strings.Contains(column, ".") {
-		r.query += " FILTER " + column + " " + operator + " @" + r.alias + "_" + column
+		r.query += " FILTER " + column + " " + operator + " @" + r.collection + "_" + column
 	} else {
-		r.query += " FILTER " + r.alias + "." + column + " " + operator + " @" + r.alias + "_" + column
+		r.query += " FILTER " + r.collection + "." + column + " " + operator + " @" + r.collection + "_" + column
 	}
 
 	if r.filterArgs == nil {
@@ -62,16 +62,16 @@ func (r *ArangoQuery) Where(column string, operator string, value interface{}) *
 		value = "%" + value.(string) + "%"
 	}
 
-	r.filterArgs[r.alias+"_"+column] = value
+	r.filterArgs[r.collection+"_"+column] = value
 
 	return r
 }
 
 func (r *ArangoQuery) WhereOr(column string, operator string, value interface{}) *ArangoQuery {
 	if strings.Contains(column, ".") {
-		r.query += " OR " + column + " " + operator + " @" + r.alias + "_" + column
+		r.query += " OR " + column + " " + operator + " @" + r.collection + "_" + column
 	} else {
-		r.query += " OR " + r.alias + "." + column + " " + operator + " @" + r.alias + "_" + column
+		r.query += " OR " + r.collection + "." + column + " " + operator + " @" + r.collection + "_" + column
 	}
 
 	if r.filterArgs == nil {
@@ -82,7 +82,7 @@ func (r *ArangoQuery) WhereOr(column string, operator string, value interface{})
 		value = "%" + value.(string) + "%"
 	}
 
-	r.filterArgs[r.alias+"_"+column] = value
+	r.filterArgs[r.collection+"_"+column] = value
 
 	return r
 }
@@ -91,7 +91,7 @@ func (r *ArangoQuery) WhereColumn(column string, operator string, value string) 
 	if strings.Contains(column, ".") || strings.Contains(column, "'") {
 		r.query += " FILTER " + column + " " + operator + " " + value
 	} else {
-		r.query += " FILTER " + r.alias + "." + column + " " + operator + " " + value
+		r.query += " FILTER " + r.collection + "." + column + " " + operator + " " + value
 	}
 	return r
 }
@@ -202,7 +202,7 @@ func (r *ArangoQuery) toQueryWithoutReturn() (string, map[string]interface{}) {
 
 	if r.traversal.enabled {
 		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s %s %s ",
-			r.alias,
+			r.collection,
 			r.traversal.direction,
 			r.traversal.sourceId,
 			r.collection,
@@ -212,7 +212,7 @@ func (r *ArangoQuery) toQueryWithoutReturn() (string, map[string]interface{}) {
 		)
 	} else {
 		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s ",
-			r.alias,
+			r.collection,
 			r.collection,
 			r.query,
 			limitQuery,
@@ -274,7 +274,7 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 
 	if r.traversal.enabled {
 		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s %s %s RETURN %s",
-			r.alias,
+			r.collection,
 			r.traversal.direction,
 			r.traversal.sourceId,
 			r.collection,
@@ -285,7 +285,7 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 		)
 	} else {
 		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s RETURN %s",
-			r.alias,
+			r.collection,
 			r.collection,
 			r.query,
 			limitQuery,
