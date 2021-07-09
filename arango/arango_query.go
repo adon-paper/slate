@@ -49,9 +49,9 @@ func SubQuery(collection string) *ArangoQuery {
 
 func (r *ArangoQuery) Where(column string, operator string, value interface{}) *ArangoQuery {
 	if strings.Contains(column, ".") {
-		r.query += " FILTER " + column + " " + operator + " @" + r.collection + "_" + column
+		r.query += " FILTER " + column + " " + operator + " @" + r.alias + "_" + column
 	} else {
-		r.query += " FILTER " + r.collection + "." + column + " " + operator + " @" + r.collection + "_" + column
+		r.query += " FILTER " + r.alias + "." + column + " " + operator + " @" + r.alias + "_" + column
 	}
 
 	if r.filterArgs == nil {
@@ -62,16 +62,16 @@ func (r *ArangoQuery) Where(column string, operator string, value interface{}) *
 		value = "%" + value.(string) + "%"
 	}
 
-	r.filterArgs[r.collection+"_"+column] = value
+	r.filterArgs[r.alias+"_"+column] = value
 
 	return r
 }
 
 func (r *ArangoQuery) WhereOr(column string, operator string, value interface{}) *ArangoQuery {
 	if strings.Contains(column, ".") {
-		r.query += " OR " + column + " " + operator + " @" + r.collection + "_" + column
+		r.query += " OR " + column + " " + operator + " @" + r.alias + "_" + column
 	} else {
-		r.query += " OR " + r.collection + "." + column + " " + operator + " @" + r.collection + "_" + column
+		r.query += " OR " + r.alias + "." + column + " " + operator + " @" + r.alias + "_" + column
 	}
 
 	if r.filterArgs == nil {
@@ -82,7 +82,7 @@ func (r *ArangoQuery) WhereOr(column string, operator string, value interface{})
 		value = "%" + value.(string) + "%"
 	}
 
-	r.filterArgs[r.collection+"_"+column] = value
+	r.filterArgs[r.alias+"_"+column] = value
 
 	return r
 }
@@ -91,7 +91,7 @@ func (r *ArangoQuery) WhereColumn(column string, operator string, value string) 
 	if strings.Contains(column, ".") || strings.Contains(column, "'") {
 		r.query += " FILTER " + column + " " + operator + " " + value
 	} else {
-		r.query += " FILTER " + r.collection + "." + column + " " + operator + " " + value
+		r.query += " FILTER " + r.alias + "." + column + " " + operator + " " + value
 	}
 	return r
 }
