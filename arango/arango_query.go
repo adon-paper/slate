@@ -106,7 +106,7 @@ func (r *ArangoQuery) Join(query *ArangoQuery) *ArangoQuery {
 }
 
 func (r *ArangoQuery) WithOne(repo *ArangoQuery, alias string) *ArangoQuery {
-	r.first = true
+	repo.first = true
 	r.with(repo, alias)
 	return r
 }
@@ -258,8 +258,7 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 				returnData += fmt.Sprintf("%s, ", join.alias)
 			}
 		}
-
-		returnData += fmt.Sprintf("%s)", r.alias)
+		returnData += fmt.Sprintf("%s)", r.collection)
 	} else {
 		returnData = r.returns
 	}

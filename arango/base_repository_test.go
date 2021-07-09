@@ -26,10 +26,9 @@ func TestArango(t *testing.T) {
 		"invoices",
 	).WithOne(
 		SubQuery("companies").
-			WhereColumn("uuid", "==", "paper_chain_payment_requests.supplier_id").Returns("name: companies.company_name"),
+			WhereColumn("uuid", "==", "paper_chain_payment_requests.supplier_id"),
 		"supplier",
-	).
-		ToQuery()
+	).ToQuery()
 
 	fmt.Println(q)
 }
