@@ -14,6 +14,10 @@ import (
 )
 
 type ArangoBaseRepositoryInterface interface {
+	// Get Raw DB Functions
+	DB() driver.Database
+
+	// Base Functions
 	BuildFilter(s interface{}, filters []ArangoFilterQueryBuilder, joinCollection string, prefixes ...string) []ArangoFilterQueryBuilder
 	RawFirst(c context.Context, queryBuilder ArangoQueryBuilder, request ArangoInterface) error
 	RawAll(c context.Context, queryBuilder ArangoQueryBuilder) ([]interface{}, int64, error)
@@ -409,4 +413,8 @@ func (r *ArangoBaseRepository) Delete(c context.Context, request ArangoInterface
 		return err
 	}
 	return nil
+}
+
+func (r *ArangoBaseRepository) DB() driver.Database {
+	return r.ArangoDB.DB()
 }
