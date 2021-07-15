@@ -28,7 +28,7 @@ type ArangoBaseRepositoryInterface interface {
 	Delete(c context.Context, request ArangoInterface) error
 
 	// Eloquent Style
-	Where(column string, operator string, value interface{}) *ArangoBaseRepository
+	Where(param ...interface{}) *ArangoBaseRepository
 	WhereOr(column string, operator string, value interface{}) *ArangoBaseRepository
 	WhereColumn(column string, operator string, value string) *ArangoBaseRepository
 	// Join(from, fromKey, To, toKey string) *ArangoBaseRepository

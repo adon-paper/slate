@@ -47,11 +47,27 @@ func SubQuery(collection string) *ArangoQuery {
 	}
 }
 
-func (r *ArangoQuery) Where(column string, operator string, value interface{}) *ArangoQuery {
+func (r *ArangoQuery) Where(param ...interface{}) *ArangoQuery {
+	column := fmt.Sprintf("%v", param[0])
+	operator := fmt.Sprintf("%v", param[1])
+
+	switch len(param) {
+	case 2:
+		r.where(column, "==", param[1])
+	case 3:
+		r.where(column, operator, param[2])
+	}
+
+	return r
+}
+
+func (r *ArangoQuery) where(column string, operator string, value interface{}) *ArangoQuery {
+	argKey := strings.ReplaceAll(r.collection+"_"+column, ".", "_")
+
 	if strings.Contains(column, ".") {
-		r.query += " FILTER " + column + " " + operator + " @" + r.collection + "_" + column
+		r.query += " FILTER " + column + " " + operator + " @" + argKey
 	} else {
-		r.query += " FILTER " + r.collection + "." + column + " " + operator + " @" + r.collection + "_" + column
+		r.query += " FILTER " + r.collection + "." + column + " " + operator + " @" + argKey
 	}
 
 	if r.filterArgs == nil {
@@ -62,16 +78,18 @@ func (r *ArangoQuery) Where(column string, operator string, value interface{}) *
 		value = "%" + value.(string) + "%"
 	}
 
-	r.filterArgs[r.collection+"_"+column] = value
+	r.filterArgs[argKey] = value
 
 	return r
 }
 
 func (r *ArangoQuery) WhereOr(column string, operator string, value interface{}) *ArangoQuery {
+	argKey := strings.ReplaceAll(r.collection+"_"+column, ".", "_")
+
 	if strings.Contains(column, ".") {
-		r.query += " OR " + column + " " + operator + " @" + r.collection + "_" + column
+		r.query += " OR " + column + " " + operator + " @" + argKey
 	} else {
-		r.query += " OR " + r.collection + "." + column + " " + operator + " @" + r.collection + "_" + column
+		r.query += " OR " + r.collection + "." + column + " " + operator + " @" + argKey
 	}
 
 	if r.filterArgs == nil {
@@ -82,7 +100,7 @@ func (r *ArangoQuery) WhereOr(column string, operator string, value interface{})
 		value = "%" + value.(string) + "%"
 	}
 
-	r.filterArgs[r.collection+"_"+column] = value
+	r.filterArgs[argKey] = value
 
 	return r
 }

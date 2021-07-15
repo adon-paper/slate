@@ -10,8 +10,8 @@ import (
 	"github.com/arangodb/go-driver"
 )
 
-func (r *ArangoBaseRepository) Where(column string, operator string, value interface{}) *ArangoBaseRepository {
-	r.ArangoQuery = *r.ArangoQuery.Where(column, operator, value)
+func (r *ArangoBaseRepository) Where(param ...interface{}) *ArangoBaseRepository {
+	r.ArangoQuery = *r.ArangoQuery.Where(param...)
 	return r
 }
 
