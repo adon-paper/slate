@@ -31,9 +31,7 @@ func Empty(a interface{}) bool {
 		if arr.Len() == 0 {
 			return true
 		}
-		return false
 	}
-
 	return false
 }
 

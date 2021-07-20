@@ -222,6 +222,10 @@ func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (stri
 func (r *ArangoBaseRepository) BuildFilter(s interface{}, filters []ArangoFilterQueryBuilder, joinCollection string, prefixes ...string) []ArangoFilterQueryBuilder {
 	v := reflect.Indirect(reflect.ValueOf(s))
 
+	if !v.IsValid() {
+		return filters
+	}
+
 	var collectionPrefix string
 	if joinCollection == "" || joinCollection == r.Collection {
 		collectionPrefix = "data."
@@ -233,25 +237,22 @@ func (r *ArangoBaseRepository) BuildFilter(s interface{}, filters []ArangoFilter
 	if len(prefixes) > 0 && prefixes[0] != "" {
 		prefix = prefixes[0] + "."
 	}
-
 	if v.Kind() == reflect.Slice {
 		if len(s.([]interface{})) > 0 {
 			// Todo : Filter by contents of array[0] in arango's array[*]
 		}
-
 	} else {
 		for i := 0; i < v.NumField(); i++ {
 			if v.Field(i).CanInterface() {
 				tags := strings.Split(v.Type().Field(i).Tag.Get("json"), ",")
 				value := v.Field(i).Interface()
-				if v.Field(i).Kind() == reflect.Struct {
+				if v.Field(i).Kind() == reflect.Struct || v.Field(i).Kind() == reflect.Ptr {
 					var tag string
 					if collection := joinCollection + v.Type().Field(i).Tag.Get("collection"); collection != "" || tags[0] == r.Collection {
 						tag = ""
 					} else {
-						tag = tags[0]
+						tag = prefix + tags[0]
 					}
-
 					filters = r.BuildFilter(value, filters, joinCollection+v.Type().Field(i).Tag.Get("collection"), tag)
 				} else {
 					if !helper.Empty(value) {

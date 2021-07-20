@@ -5,12 +5,12 @@ import (
 	"testing"
 )
 
-func TestArango(t *testing.T) {
+func TestEloquent(t *testing.T) {
 	db, _ := InitArangoDBTest()
 	repo := NewArangoBaseRepository(db, "paper_chain_payment_requests")
 
 	var q string
-	// var maps map[string]interface{}
+	// // var maps map[string]interface{}
 
 	q, _ = repo.WithMany(
 		SubQuery("has_payment_request").
