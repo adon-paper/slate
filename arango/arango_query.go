@@ -1,10 +1,15 @@
 package arango
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
+	"github.com/arangodb/go-driver"
 	"github.com/noldwidjaja/slate/helper"
 )
 
@@ -39,6 +44,15 @@ type ArangoQuery struct {
 	limit      int
 	first      bool
 	alias      string
+
+	ArangoDB ArangoDB
+}
+
+func NewQuery(collection string) *ArangoQuery {
+	return &ArangoQuery{
+		collection: collection,
+		alias:      collection,
+	}
 }
 
 func SubQuery(collection string) *ArangoQuery {
@@ -48,19 +62,9 @@ func SubQuery(collection string) *ArangoQuery {
 	}
 }
 
-func (r *ArangoQuery) Where(param ...interface{}) *ArangoQuery {
-	column := fmt.Sprintf("%v", param[0])
-	operator := fmt.Sprintf("%v", param[1])
-
-	switch len(param) {
-	case 2:
-		r.where(column, "==", param[1])
-	case 3:
-		r.where(column, operator, param[2])
-	}
-
-	return r
-}
+/***************************************
+			Private Functions
+****************************************/
 
 func (r *ArangoQuery) where(column string, operator string, value interface{}) *ArangoQuery {
 	argKey := strings.ReplaceAll(r.collection+"_"+column, ".", "_")
@@ -80,6 +84,128 @@ func (r *ArangoQuery) where(column string, operator string, value interface{}) *
 	}
 
 	r.filterArgs[argKey] = value
+
+	return r
+}
+
+func (r *ArangoQuery) clearQuery() {
+	r.query = ""
+	r.filterArgs = make(map[string]interface{})
+	r.joins = nil
+	r.withs = nil
+	r.sortField = ""
+	r.sortOrder = ""
+	r.returns = ""
+	r.offset = 0
+	r.limit = 0
+	r.alias = r.collection
+	r.traversal = arangoQueryTraversal{}
+}
+
+func (r *ArangoQuery) with(query *ArangoQuery, alias string) *ArangoQuery {
+	query.alias = alias
+	q, f := query.ToQuery()
+	r.query += ` LET ` + alias + ` = ( 
+      ` + q + ` 
+      )
+   `
+
+	r.withs = append(r.withs, query)
+	r.filterArgs = helper.MergeMaps(r.filterArgs, f)
+	return r
+}
+
+func (r *ArangoQuery) toQueryWithoutReturn() (string, map[string]interface{}) {
+	var (
+		limitQuery string
+		sortQuery  string
+		finalQuery string
+	)
+
+	if r.limit > 0 {
+		limitQuery = fmt.Sprintf("LIMIT %s,%s", strconv.Itoa(r.offset), strconv.Itoa(r.limit))
+	}
+
+	if r.sortField != "" {
+		sortQuery = fmt.Sprintf("SORT %s %s", r.sortField, r.sortOrder)
+	}
+
+	if r.traversal.enabled {
+		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s %s %s ",
+			r.collection,
+			r.traversal.direction,
+			r.traversal.sourceId,
+			r.collection,
+			r.query,
+			limitQuery,
+			sortQuery,
+		)
+	} else {
+		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s ",
+			r.collection,
+			r.collection,
+			r.query,
+			limitQuery,
+			sortQuery,
+		)
+	}
+
+	args := r.filterArgs
+
+	return finalQuery, args
+}
+
+func (r *ArangoQuery) executeQuery(request interface{}) error {
+	c := context.Background()
+
+	ctx := driver.WithQueryCount(c)
+
+	data, err := r.ArangoDB.DB().Query(ctx, r.query, r.filterArgs)
+	r.clearQuery()
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	defer data.Close()
+
+	if data.Count() > 0 {
+		v := reflect.Indirect(reflect.ValueOf(request))
+
+		if v.Kind() == reflect.Slice {
+			var response []interface{}
+			for data.HasMore() {
+				var d interface{}
+				data.ReadDocument(c, &d)
+				response = append(response, d)
+			}
+
+			jsonResponse, _ := json.Marshal(response)
+			json.Unmarshal(jsonResponse, &request)
+			return nil
+		}
+
+		data.ReadDocument(c, &request)
+		return nil
+	}
+
+	return errors.New("not found")
+}
+
+/************************************************
+			Public Arango Functions
+************************************************/
+
+func (r *ArangoQuery) Where(param ...interface{}) *ArangoQuery {
+	column := fmt.Sprintf("%v", param[0])
+	operator := fmt.Sprintf("%v", param[1])
+
+	switch len(param) {
+	case 2:
+		r.where(column, "==", param[1])
+	case 3:
+		r.where(column, operator, param[2])
+	}
 
 	return r
 }
@@ -133,19 +259,6 @@ func (r *ArangoQuery) WithOne(repo *ArangoQuery, alias string) *ArangoQuery {
 func (r *ArangoQuery) WithMany(repo *ArangoQuery, alias string) *ArangoQuery {
 	r.first = false
 	r.with(repo, alias)
-	return r
-}
-
-func (r *ArangoQuery) with(query *ArangoQuery, alias string) *ArangoQuery {
-	query.alias = alias
-	q, f := query.ToQuery()
-	r.query += ` LET ` + alias + ` = ( 
-      ` + q + ` 
-      )
-   `
-
-	r.withs = append(r.withs, query)
-	r.filterArgs = helper.MergeMaps(r.filterArgs, f)
 	return r
 }
 
@@ -210,45 +323,9 @@ func (r *ArangoQuery) Returns(returns ...string) *ArangoQuery {
 	return r
 }
 
-func (r *ArangoQuery) toQueryWithoutReturn() (string, map[string]interface{}) {
-	var (
-		limitQuery string
-		sortQuery  string
-		finalQuery string
-	)
-
-	if r.limit > 0 {
-		limitQuery = fmt.Sprintf("LIMIT %s,%s", strconv.Itoa(r.offset), strconv.Itoa(r.limit))
-	}
-
-	if r.sortField != "" {
-		sortQuery = fmt.Sprintf("SORT %s %s", r.sortField, r.sortOrder)
-	}
-
-	if r.traversal.enabled {
-		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s %s %s ",
-			r.collection,
-			r.traversal.direction,
-			r.traversal.sourceId,
-			r.collection,
-			r.query,
-			limitQuery,
-			sortQuery,
-		)
-	} else {
-		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s ",
-			r.collection,
-			r.collection,
-			r.query,
-			limitQuery,
-			sortQuery,
-		)
-	}
-
-	args := r.filterArgs
-
-	return finalQuery, args
-}
+/***********************************************
+			Query Specific Functions
+***********************************************/
 
 func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 	var (
@@ -329,16 +406,30 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 	return finalQuery, args
 }
 
-func (r *ArangoQuery) clearQuery() {
-	r.query = ""
-	r.filterArgs = make(map[string]interface{})
-	r.joins = nil
-	r.withs = nil
-	r.sortField = ""
-	r.sortOrder = ""
-	r.returns = ""
-	r.offset = 0
-	r.limit = 0
-	r.alias = r.collection
-	r.traversal = arangoQueryTraversal{}
+func (r *ArangoQuery) Get(request interface{}) error {
+
+	r.query, r.filterArgs = r.ToQuery()
+
+	return r.executeQuery(request)
+}
+
+func (r *ArangoQuery) Count(request interface{}) error {
+	var (
+		returnData string
+		limitQuery string
+		sortQuery  string
+	)
+
+	returnData = "COLLECT WITH COUNT INTO total RETURN total"
+
+	r.query = fmt.Sprintf("FOR %s in %s %s %s %s %s",
+		r.collection,
+		r.collection,
+		r.query,
+		limitQuery,
+		sortQuery,
+		returnData,
+	)
+
+	return r.executeQuery(request)
 }

@@ -28,39 +28,28 @@ type ArangoBaseRepositoryInterface interface {
 	Delete(c context.Context, request ArangoInterface) error
 
 	// Eloquent Style
-	Where(param ...interface{}) *ArangoBaseRepository
-	WhereOr(column string, operator string, value interface{}) *ArangoBaseRepository
-	WhereColumn(column string, operator string, value string) *ArangoBaseRepository
-	// Join(from, fromKey, To, toKey string) *ArangoBaseRepository
-	// JoinEdge(from, fromKey, edge, alias, direction string) *ArangoBaseRepository
-	Join(query *ArangoQuery) *ArangoBaseRepository
-	WithMany(repo *ArangoQuery, alias string) *ArangoBaseRepository
-	WithOne(repo *ArangoQuery, alias string) *ArangoBaseRepository
-	Offset(offset int) *ArangoBaseRepository
-	Limit(limit int) *ArangoBaseRepository
-	Sort(sortField, sortOrder string) *ArangoBaseRepository
-	Traversal(sourceId string, direction traversalDirection) *ArangoBaseRepository
-	Get(request interface{}) error
-	ToQuery() (string, map[string]interface{})
-	Count(request interface{}) error
-	executeQuery(request interface{}) error
-	clearQuery()
+	Where(param ...interface{}) *ArangoQuery
+	WhereOr(column string, operator string, value interface{}) *ArangoQuery
+	WhereColumn(column string, operator string, value string) *ArangoQuery
+	Join(query *ArangoQuery) *ArangoQuery
+	WithMany(repo *ArangoQuery, alias string) *ArangoQuery
+	WithOne(repo *ArangoQuery, alias string) *ArangoQuery
+	Offset(offset int) *ArangoQuery
+	Limit(limit int) *ArangoQuery
+	Sort(sortField, sortOrder string) *ArangoQuery
+	Traversal(sourceId string, direction traversalDirection) *ArangoQuery
+	Returns(returns ...string) *ArangoQuery
 }
 
 type ArangoBaseRepository struct {
 	ArangoDB   ArangoDB
 	Collection string
-	ArangoQuery
 }
 
 func NewArangoBaseRepository(arangoDB ArangoDB, collection string) ArangoBaseRepositoryInterface {
 	return &ArangoBaseRepository{
 		ArangoDB:   arangoDB,
 		Collection: collection,
-		ArangoQuery: ArangoQuery{
-			collection: collection,
-			alias:      collection,
-		},
 	}
 }
 
