@@ -1,22 +1,21 @@
 package arango
 
 import (
-	"context"
 	"testing"
 )
 
 func TestFirst(t *testing.T) {
-	db, _ := InitArangoDBTest()
-	repo := NewArangoBaseRepository(db, "paper_chain_payment_requests")
+	// db, _ := InitArangoDBTest()
+	// repo := NewArangoBaseRepository(db, "paper_chain_payment_requests")
 
-	f := FinancingFacility{}
-	f.Limit = 123
-	f.BNPL = &BNPL{
-		Setting: Setting{
-			LateFee: 321,
-		},
-	}
-	repo.First(context.Background(), &f)
+	// f := FinancingFacility{}
+	// f.Limit = 123
+	// f.BNPL = &BNPL{
+	// 	Setting: Setting{
+	// 		LateFee: 321,
+	// 	},
+	// }
+	// repo.First(context.Background(), &f)
 }
 
 type FinancingFacility struct {

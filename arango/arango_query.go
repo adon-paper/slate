@@ -22,6 +22,7 @@ type arangoQueryTraversal struct {
 	enabled   bool
 	direction traversalDirection
 	sourceId  string
+	withEdge  bool
 }
 
 type ArangoQuery struct {
@@ -175,10 +176,16 @@ func (r *ArangoQuery) Sort(sortField, sortOrder string) *ArangoQuery {
 	return r
 }
 
-func (r *ArangoQuery) Traversal(source string, direction traversalDirection) *ArangoQuery {
+func (r *ArangoQuery) Traversal(source string, direction traversalDirection, withEdge ...bool) *ArangoQuery {
 	r.traversal.enabled = true
 	r.traversal.direction = direction
 	r.traversal.sourceId = source
+
+	if len(withEdge) > 0 {
+		if withEdge[0] {
+			r.traversal.withEdge = true
+		}
+	}
 
 	return r
 }
@@ -290,8 +297,14 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 	}
 
 	if r.traversal.enabled {
+		var collection string
+		collection = r.collection
+		if r.traversal.withEdge {
+			collection = r.collection + ",edge"
+			returnData = "{document:" + returnData + ", edge: edge}"
+		}
 		finalQuery = fmt.Sprintf("FOR %s in %s %s %s %s %s %s RETURN %s",
-			r.collection,
+			collection,
 			r.traversal.direction,
 			r.traversal.sourceId,
 			r.collection,

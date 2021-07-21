@@ -14,7 +14,7 @@ func TestEloquent(t *testing.T) {
 
 	q, _ = repo.WithMany(
 		SubQuery("has_payment_request").
-			Traversal("paper_chain_payment_requests._id", "ANY").
+			Traversal("paper_chain_payment_requests._id", "ANY", true).
 			Returns(
 				"amount_due:has_payment_request.document_info.amount_due",
 				"due_date:has_payment_request.document_info.due_date",
