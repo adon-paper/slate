@@ -76,3 +76,17 @@ func (r *ArangoBaseRepository) Returns(returns ...string) *ArangoQuery {
 
 	return q
 }
+
+func (r *ArangoBaseRepository) Get(request interface{}) error {
+	q := NewQuery(r.Collection)
+	q.ArangoDB = r.ArangoDB
+
+	return q.Get(request)
+}
+
+func (r *ArangoBaseRepository) Count(request interface{}) error {
+	q := NewQuery(r.Collection)
+	q.ArangoDB = r.ArangoDB
+
+	return q.Count(request)
+}
