@@ -39,6 +39,7 @@ type ArangoBaseRepositoryInterface interface {
 	Sort(sortField, sortOrder string) *ArangoQuery
 	Traversal(sourceId string, direction traversalDirection) *ArangoQuery
 	Returns(returns ...string) *ArangoQuery
+	NewQuery() *ArangoQuery
 }
 
 type ArangoBaseRepository struct {

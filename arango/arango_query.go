@@ -48,10 +48,11 @@ type ArangoQuery struct {
 	ArangoDB ArangoDB
 }
 
-func NewQuery(collection string) *ArangoQuery {
+func NewQuery(collection string, db ArangoDB) *ArangoQuery {
 	return &ArangoQuery{
 		collection: collection,
 		alias:      collection,
+		ArangoDB:   db,
 	}
 }
 
