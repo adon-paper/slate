@@ -387,8 +387,8 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 			r.traversal.sourceId,
 			r.collection,
 			r.query,
-			limitQuery,
 			sortQuery,
+			limitQuery,
 			returnData,
 		)
 	} else {
@@ -396,8 +396,8 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 			r.collection,
 			r.collection,
 			r.query,
-			limitQuery,
 			sortQuery,
+			limitQuery,
 			returnData,
 		)
 	}
