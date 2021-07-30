@@ -181,8 +181,15 @@ func (r *ArangoQuery) executeQuery(request interface{}) error {
 				response = append(response, d)
 			}
 
-			jsonResponse, _ := json.Marshal(response)
-			json.Unmarshal(jsonResponse, &request)
+			jsonResponse, err := json.Marshal(response)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			err = json.Unmarshal(jsonResponse, &request)
+			if err != nil {
+				fmt.Println(err)
+			}
 			return nil
 		}
 
