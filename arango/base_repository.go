@@ -40,6 +40,8 @@ type ArangoBaseRepositoryInterface interface {
 	Traversal(sourceId string, direction traversalDirection) *ArangoQuery
 	Returns(returns ...string) *ArangoQuery
 	NewQuery() *ArangoQuery
+	Get(request interface{}) error
+	Count(request interface{}) error
 }
 
 type ArangoBaseRepository struct {
