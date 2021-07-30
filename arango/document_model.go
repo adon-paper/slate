@@ -34,8 +34,14 @@ func (d *DocumentModel) GetKey() string {
 }
 
 func (d *DocumentModel) InitializeTimestamp() {
-	d.CreatedAt = time.Now()
-	d.UpdatedAt = time.Now()
+	var emptyTime time.Time
+	if d.CreatedAt == emptyTime {
+		d.CreatedAt = time.Now()
+	}
+
+	if d.UpdatedAt == emptyTime {
+		d.UpdatedAt = time.Now()
+	}
 }
 
 func (d *DocumentModel) Set(Id, Key, Rev string) {
