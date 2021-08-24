@@ -67,8 +67,21 @@ func SubQuery(collection string) *ArangoQuery {
 			Private Functions
 ****************************************/
 
+func (r *ArangoQuery) getArgKey(argKey string, index int) string {
+	key := argKey
+	if index != 0 {
+		key += fmt.Sprintf("%d", index)
+	}
+
+	if _, ok := r.filterArgs[key]; ok {
+		key = r.getArgKey(argKey, index+1)
+	}
+
+	return key
+}
+
 func (r *ArangoQuery) where(column string, operator string, value interface{}) *ArangoQuery {
-	argKey := strings.ReplaceAll(r.collection+"_"+column, ".", "_")
+	argKey := r.getArgKey(strings.ReplaceAll(r.collection+"_"+column, ".", "_"), 0)
 
 	if strings.Contains(column, ".") {
 		r.query += " FILTER " + column + " " + operator + " @" + argKey

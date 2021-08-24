@@ -31,4 +31,11 @@ func TestEloquent(t *testing.T) {
 	).ToQuery()
 
 	fmt.Println(q)
+
+	var maps map[string]interface{}
+
+	q, maps = repo.Where("name", "==", "chad").Where("name", "==", "rekt").ToQuery()
+
+	fmt.Println(q)
+	fmt.Println(maps)
 }
