@@ -197,8 +197,8 @@ func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (stri
 
 		query = `
 			FOR ` + alias + ` IN ` + collection +
-			joinQuery + " " + filterQuery + withQuery +
-			" LIMIT " + strconv.Itoa(queryBuilder.First) + ", " + strconv.Itoa(queryBuilder.Rows) + sort + `
+			joinQuery + " " + filterQuery + withQuery + sort +
+			" LIMIT " + strconv.Itoa(queryBuilder.First) + ", " + strconv.Itoa(queryBuilder.Rows) +`
 			RETURN ` + resultQuery
 
 	} else {
@@ -250,7 +250,7 @@ func (r *ArangoBaseRepository) BuildFilter(s interface{}, filters []ArangoFilter
 					if !helper.Empty(value) {
 						var filter ArangoFilterQueryBuilder
 						if filterKey := v.Type().Field(i).Tag.Get("filter"); filterKey != "" {
-							if v.Type().Field(i).Type.String()[:2] == "[]" {
+							if v.Type().Field(i).Type.String()[:2] == "func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (string, string, map[string]interface{}) {\n" {
 								filter.Key = collectionPrefix + prefix + filterKey
 								filter.Value = v.Field(i).Interface()
 								filter.Operator = "IN"
