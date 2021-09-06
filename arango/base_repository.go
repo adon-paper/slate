@@ -197,7 +197,7 @@ func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (stri
 
 		query = `
 			FOR ` + alias + ` IN ` + collection +
-			joinQuery + " " + filterQuery + withQuery + sort +
+			joinQuery + " " + filterQuery + withQuery + " " + sort +
 			" LIMIT " + strconv.Itoa(queryBuilder.First) + ", " + strconv.Itoa(queryBuilder.Rows) +`
 			RETURN ` + resultQuery
 
