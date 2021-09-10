@@ -26,7 +26,7 @@ func Empty(a interface{}) bool {
 	}
 
 	switch reflect.TypeOf(a).Kind() {
-	case reflect.Array, reflect.Slice:
+	case reflect.Array, reflect.Slice, reflect.Map:
 		arr := reflect.ValueOf(a)
 		if arr.Len() == 0 {
 			return true
