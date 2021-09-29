@@ -83,7 +83,7 @@ func (r *ArangoQuery) getArgKey(argKey string, index int) string {
 func (r *ArangoQuery) where(column string, operator string, value interface{}) *ArangoQuery {
 	argKey := r.getArgKey(strings.ReplaceAll(r.collection+"_"+column, ".", "_"), 0)
 
-	if strings.Contains(column, ".") {
+	if strings.Contains(column, ".") || helper.IsAggregates(column) {
 		r.query += " FILTER " + column + " " + operator + " @" + argKey
 	} else {
 		r.query += " FILTER " + r.collection + "." + column + " " + operator + " @" + argKey
