@@ -1,7 +1,9 @@
 package helper
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -26,7 +28,7 @@ func Empty(a interface{}) bool {
 	}
 
 	switch reflect.TypeOf(a).Kind() {
-	case reflect.Array, reflect.Slice:
+	case reflect.Array, reflect.Slice, reflect.Map:
 		arr := reflect.ValueOf(a)
 		if arr.Len() == 0 {
 			return true
@@ -45,4 +47,22 @@ func MergeMaps(maps ...map[string]interface{}) map[string]interface{} {
 	}
 
 	return result
+}
+
+func IsAggregates(s string) bool{
+	aggregate := []string{"COUNT","SUM"}
+	if stringContainInSlice(s, aggregate){
+		return true
+	}
+	return false
+}
+
+func stringContainInSlice(a string, list []string) bool {
+	for _, b := range list {
+		fmt.Println(a,b)
+		if strings.Contains(strings.ToLower(a), strings.ToLower(b)) {
+			return true
+		}
+	}
+	return false
 }
