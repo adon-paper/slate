@@ -1,7 +1,6 @@
 package helper
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -59,7 +58,6 @@ func IsAggregates(s string) bool{
 
 func stringContainInSlice(a string, list []string) bool {
 	for _, b := range list {
-		fmt.Println(a,b)
 		if strings.Contains(strings.ToLower(a), strings.ToLower(b)) {
 			return true
 		}
