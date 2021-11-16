@@ -13,25 +13,29 @@ func TestEloquent(t *testing.T) {
 	// // var maps map[string]interface{}
 
 	q, _ = repo.
-		//	WithMany(
-		//	SubQuery("has_payment_request").
-		//		Traversal("paper_chain_payment_requests._id", "ANY", true).
-		//		Returns(
-		//			"amount_due:has_payment_request.document_info.amount_due",
-		//			"due_date:has_payment_request.document_info.due_date",
-		//			"grand_total:has_payment_request.document_info.totals.grandTotalUnformatted",
-		//			"invoice_id:has_payment_request.document_info.uuid",
-		//			"invoice_number:has_payment_request.document_number",
-		//			"status:has_payment_request.document_info.status",
-		//		),
-		//	"invoices",
-		//).WithOne(
-		//	SubQuery("companies").
-		//		WhereColumn("uuid", "==", "paper_chain_payment_requests.supplier_id"),
-		//	"supplier",
-		//).
-		Join(SubQuery("company").WhereColumn("company._id", "==", "paper_chain_payment_requests.company_id")).where("count(100)", "<=", "100").where("test", "==", 2000).
-		ToQuery()
+		WithMany(SubQueryWithAlias("payment_reconciliation_transactions", "prt1").
+			WhereColumn("company_id", "==", "digital_payment_finance_accounts.company_id").
+			Where("status", "IN", []string{"POSTED", "settlement"}).
+			Where("created_at", ">=", "2021-09-13T16:44:44.266164424+07:00").
+			Returns("total:prt1.amount.grand_total"),
+			"debit").
+		WithMany(SubQueryWithAlias("payment_reconciliation_transactions", "prt2").
+			WhereColumn("company_id", "==", "digital_payment_finance_accounts.company_id").
+			Where("status", "IN", []string{"DRAFT", "PENDING", "FRAUD"}).
+			Where("created_at", ">=", "2021-09-13T16:44:44.266164424+07:00").
+			Returns("total:prt2.amount.grand_total"),
+			"onhold").
+		WithMany(SubQuery("digpay_disbursement_transactions").
+			WhereColumn("digpay_disbursement_transactions.company_id", "==", "digital_payment_finance_accounts.company_id").
+			Where("digpay_disbursement_transactions.disbursement_request_no", "LIKE", "DISB%").
+			Returns("total:digpay_disbursement_transactions.disbursement_amount"),
+			"disbursed").
+		WhereColumn("digital_payment_finance_accounts.debit_balance", "!=", "sum(debit[*].total)").
+		WhereOrColumn("digital_payment_finance_accounts.credit_balance", "!=", "sum(disbursed[*].total)").
+		WhereOrColumn("digital_payment_finance_accounts.on_hold_amount", "!=", "sum(onhold[*].total)").
+		Where("digital_payment_finance_accounts.on_hold_amount", "!=", "0").
+		Where("digital_payment_finance_accounts.on_hold_amount", "!=", nil).
+		Returns("debit :sum(debit[*].total)", "onhold :sum(onhold[*].total)", "disbursed :sum(disbursed[*].total)", " digital_payment_finance_accounts").ToQuery()
 
 	fmt.Println(q)
 
