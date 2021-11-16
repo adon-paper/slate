@@ -70,9 +70,9 @@ func SubQuery(collection string) *ArangoQuery {
 func (r *ArangoQuery) getArgKey(argKey string, index int) string {
 	var key string
 	if r.filterArgs == nil {
-		key = fmt.Sprintf("%v", 1)
+		key = fmt.Sprintf("%s%v", argKey, 1)
 	} else {
-		key = fmt.Sprintf("%v", len(r.filterArgs)+1)
+		key = fmt.Sprintf("%s%v", argKey, len(r.filterArgs)+1)
 	}
 
 	return key
