@@ -261,6 +261,15 @@ func (r *ArangoQuery) WhereColumn(column string, operator string, value string) 
 	return r
 }
 
+func (r *ArangoQuery) WhereOrColumn(column string, operator string, value string) *ArangoQuery {
+	if strings.Contains(column, ".") || strings.Contains(column, "'") {
+		r.query += " OR " + column + " " + operator + " " + value
+	} else {
+		r.query += " OR " + r.collection + "." + column + " " + operator + " " + value
+	}
+	return r
+}
+
 func (r *ArangoQuery) Join(query *ArangoQuery) *ArangoQuery {
 	q, f := query.toQueryWithoutReturn()
 	r.query += q
