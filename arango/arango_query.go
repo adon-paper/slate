@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/arangodb/go-driver"
 	"github.com/noldwidjaja/slate/helper"
@@ -69,7 +68,12 @@ func SubQuery(collection string) *ArangoQuery {
 ****************************************/
 
 func (r *ArangoQuery) getArgKey(argKey string, index int) string {
-	key := fmt.Sprintf("%v", time.Now().UnixNano())
+	var key string
+	if r.filterArgs == nil {
+		key = fmt.Sprintf("%v", 1)
+	} else {
+		key = fmt.Sprintf("%v", len(r.filterArgs)+1)
+	}
 
 	return key
 }
