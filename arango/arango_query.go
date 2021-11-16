@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/arangodb/go-driver"
 	"github.com/noldwidjaja/slate/helper"
@@ -44,8 +45,8 @@ type ArangoQuery struct {
 	limit      int
 	first      bool
 	alias      string
-	arrs int
-	ArangoDB ArangoDB
+	arrs       int
+	ArangoDB   ArangoDB
 }
 
 func NewQuery(collection string, db ArangoDB) *ArangoQuery {
@@ -68,20 +69,13 @@ func SubQuery(collection string) *ArangoQuery {
 ****************************************/
 
 func (r *ArangoQuery) getArgKey(argKey string, index int) string {
-	key := argKey
-	if index != 0 {
-		key += fmt.Sprintf("%d", index)
-	}
-
-	if _, ok := r.filterArgs[key]; ok {
-		key = r.getArgKey(argKey, index+1)
-	}
+	key := fmt.Sprintf("%v", time.Now().UnixNano())
 
 	return key
 }
 
 func (r *ArangoQuery) where(column string, operator string, value interface{}) *ArangoQuery {
-	replacer := strings.NewReplacer("(", "_",")", "", ".", "_")
+	replacer := strings.NewReplacer("(", "_", ")", "", ".", "_")
 	argKey := r.getArgKey(replacer.Replace(r.collection+"_"+column), 0)
 	if strings.Contains(column, ".") || helper.IsAggregates(column) {
 		r.query += " FILTER " + column + " " + operator + " @" + argKey
