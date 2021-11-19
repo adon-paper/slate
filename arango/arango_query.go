@@ -44,6 +44,7 @@ type ArangoQuery struct {
 	limit      int
 	first      bool
 	alias      string
+	outeralias string
 	arrs       int
 	ArangoDB   ArangoDB
 }
@@ -53,6 +54,7 @@ func NewQuery(collection string, db ArangoDB) *ArangoQuery {
 		collection: collection,
 		alias:      collection,
 		ArangoDB:   db,
+		outeralias: collection,
 	}
 }
 
@@ -60,6 +62,7 @@ func SubQuery(collection string) *ArangoQuery {
 	return &ArangoQuery{
 		collection: collection,
 		alias:      collection,
+		outeralias: collection,
 	}
 }
 
@@ -67,6 +70,7 @@ func SubQueryWithAlias(collection string, alias string) *ArangoQuery {
 	return &ArangoQuery{
 		collection: collection,
 		alias:      alias,
+		outeralias: collection,
 	}
 }
 
@@ -284,12 +288,14 @@ func (r *ArangoQuery) Join(query *ArangoQuery) *ArangoQuery {
 }
 
 func (r *ArangoQuery) WithOne(repo *ArangoQuery, alias string) *ArangoQuery {
+	repo.outeralias = alias
 	repo.first = true
 	r.with(repo, alias)
 	return r
 }
 
 func (r *ArangoQuery) WithMany(repo *ArangoQuery, alias string) *ArangoQuery {
+	repo.outeralias = alias
 	r.first = false
 	r.with(repo, alias)
 	return r
@@ -374,15 +380,15 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 		if len(r.withs) > 0 {
 			returnData += "{"
 			for index, with := range r.withs {
-				alias := with.alias
+				alias := with.outeralias
 				if with.first {
 					alias = fmt.Sprintf(" FIRST(%s) ", alias)
 				}
 
 				if index == 0 {
-					returnData += fmt.Sprintf("%s :%s", with.alias, alias)
+					returnData += fmt.Sprintf("%s :%s", with.outeralias, alias)
 				} else {
-					returnData += fmt.Sprintf(", %s :%s", with.alias, alias)
+					returnData += fmt.Sprintf(", %s :%s", with.outeralias, alias)
 				}
 			}
 			returnData += "}, "
