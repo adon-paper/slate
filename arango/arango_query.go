@@ -45,8 +45,8 @@ type ArangoQuery struct {
 	first      bool
 	alias      string
 	outeralias string
-	arrs       int
 	ArangoDB   ArangoDB
+	letAlias   string
 }
 
 func NewQuery(collection string, db ArangoDB) *ArangoQuery {
@@ -126,7 +126,8 @@ func (r *ArangoQuery) clearQuery() {
 
 func (r *ArangoQuery) with(query *ArangoQuery, alias string) *ArangoQuery {
 	q, f := query.ToQuery()
-	r.query += ` LET ` + alias + ` = ( 
+	query.letAlias = "let" + alias
+	r.query += ` LET ` + query.letAlias + ` = ( 
       ` + q + ` 
       )
    `
@@ -380,9 +381,9 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 		if len(r.withs) > 0 {
 			returnData += "{"
 			for index, with := range r.withs {
-				alias := with.outeralias
+				alias := with.letAlias
 				if with.first {
-					alias = fmt.Sprintf(" FIRST(%s) ", alias)
+					alias = fmt.Sprintf(" FIRST(%s) ", with.letAlias)
 				}
 
 				if index == 0 {
