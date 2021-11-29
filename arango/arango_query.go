@@ -376,14 +376,14 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 	)
 
 	if r.returns == "" {
-		returnData = "MERGE("
+		returnData = "MERGE(" + r.alias
 
 		if len(r.withs) > 0 {
-			returnData += "{"
+			returnData += ", {"
 			for index, with := range r.withs {
 				alias := with.letAlias
 				if with.first {
-					alias = fmt.Sprintf(" FIRST(%s) ", with.letAlias)
+					alias = fmt.Sprintf(" FIRST(%s)", with.letAlias)
 				}
 
 				if index == 0 {
@@ -392,15 +392,15 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 					returnData += fmt.Sprintf(", %s :%s", with.outeralias, alias)
 				}
 			}
-			returnData += "}, "
+			returnData += "}"
 		}
 
 		if len(r.joins) > 0 {
 			for _, join := range r.joins {
-				returnData += fmt.Sprintf("%s, ", join.alias)
+				returnData += fmt.Sprintf(", %s", join.alias)
 			}
 		}
-		returnData += fmt.Sprintf("%s)", r.alias)
+		returnData += ")"
 	} else {
 		returnData = r.returns
 	}
