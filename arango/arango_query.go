@@ -175,9 +175,7 @@ func (r *ArangoQuery) toQueryWithoutReturn() (string, map[string]interface{}) {
 	return finalQuery, args
 }
 
-func (r *ArangoQuery) executeQuery(request interface{}) error {
-	c := context.Background()
-
+func (r *ArangoQuery) executeQuery(c context.Context, request interface{}) error {
 	ctx := driver.WithQueryCount(c)
 
 	data, err := r.ArangoDB.DB().Query(ctx, r.query, r.filterArgs)
@@ -448,7 +446,14 @@ func (r *ArangoQuery) Get(request interface{}) error {
 
 	r.query, r.filterArgs = r.ToQuery()
 
-	return r.executeQuery(request)
+	return r.executeQuery(context.Background(), request)
+}
+
+func (r *ArangoQuery) GetWithContext(c context.Context, request interface{}) error {
+
+	r.query, r.filterArgs = r.ToQuery()
+
+	return r.executeQuery(c, request)
 }
 
 func (r *ArangoQuery) Count(request interface{}) error {
@@ -469,5 +474,5 @@ func (r *ArangoQuery) Count(request interface{}) error {
 		returnData,
 	)
 
-	return r.executeQuery(request)
+	return r.executeQuery(context.Background(), request)
 }

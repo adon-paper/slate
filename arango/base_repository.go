@@ -42,6 +42,11 @@ type ArangoBaseRepositoryInterface interface {
 	NewQuery() *ArangoQuery
 	Get(request interface{}) error
 	Count(request interface{}) error
+
+	// Transaction
+	BeginTransaction(c context.Context, read, write, exclusive []string, opts *driver.BeginTransactionOptions) (Transaction, error)
+	CommitTransaction(c context.Context, t Transaction) error
+	AbortTransaction(c context.Context, t Transaction) error
 }
 
 type ArangoBaseRepository struct {
@@ -198,7 +203,7 @@ func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (stri
 		query = `
 			FOR ` + alias + ` IN ` + collection +
 			joinQuery + " " + filterQuery + withQuery + " " + sort +
-			" LIMIT " + strconv.Itoa(queryBuilder.First) + ", " + strconv.Itoa(queryBuilder.Rows) +`
+			" LIMIT " + strconv.Itoa(queryBuilder.First) + ", " + strconv.Itoa(queryBuilder.Rows) + `
 			RETURN ` + resultQuery
 
 	} else {
@@ -410,4 +415,32 @@ func (r *ArangoBaseRepository) Delete(c context.Context, request ArangoInterface
 
 func (r *ArangoBaseRepository) DB() driver.Database {
 	return r.ArangoDB.DB()
+}
+
+func (r *ArangoBaseRepository) BeginTransaction(c context.Context, read, write, exclusive []string, opts *driver.BeginTransactionOptions) (Transaction, error) {
+	var t Transaction
+
+	t.Collections = driver.TransactionCollections{
+		Read:      read,
+		Write:     write,
+		Exclusive: exclusive,
+	}
+
+	tID, err := r.DB().BeginTransaction(c, t.Collections, &driver.BeginTransactionOptions{LockTimeout: 50 * time.Second})
+	if err != nil {
+		return t, err
+	}
+
+	t.ID = tID
+	t.Context = driver.WithTransactionID(c, t.ID)
+
+	return t, nil
+}
+
+func (r *ArangoBaseRepository) CommitTransaction(c context.Context, t Transaction) error {
+	return r.DB().CommitTransaction(c, t.ID, nil)
+}
+
+func (r *ArangoBaseRepository) AbortTransaction(c context.Context, t Transaction) error {
+	return r.DB().AbortTransaction(c, t.ID, nil)
 }
