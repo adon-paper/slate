@@ -277,7 +277,7 @@ func (r *ArangoQuery) WhereOrColumn(column string, operator string, value string
 
 func (r *ArangoQuery) Join(query *ArangoQuery) *ArangoQuery {
 	q, f := query.toQueryWithoutReturn()
-	r.query += q
+	r.query += " " + q
 
 	r.joins = append(r.joins, query)
 	r.filterArgs = helper.MergeMaps(r.filterArgs, f)
