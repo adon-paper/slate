@@ -217,6 +217,13 @@ func (r *ArangoQuery) executeQuery(c context.Context, request interface{}) error
 	return errors.New("not found")
 }
 
+func (r *ArangoQuery) setRawQuery(query string, args map[string]interface{}) *ArangoQuery {
+	r.query = query
+	r.filterArgs = args
+
+	return r
+}
+
 /************************************************
 			Public Arango Functions
 ************************************************/

@@ -1,5 +1,7 @@
 package arango
 
+import "context"
+
 func (r *ArangoBaseRepository) Where(param ...interface{}) *ArangoQuery {
 	return NewQuery(r.Collection, r.ArangoDB).Where(param...)
 }
@@ -55,4 +57,8 @@ func (r *ArangoBaseRepository) Count(request interface{}) error {
 
 func (r *ArangoBaseRepository) NewQuery() *ArangoQuery {
 	return NewQuery(r.Collection, r.ArangoDB)
+}
+
+func (r *ArangoBaseRepository) Raw(c context.Context, query string, args map[string]interface{}, response interface{}) error {
+	return NewQuery(r.Collection, r.ArangoDB).setRawQuery(query, args).executeQuery(c, response)
 }
