@@ -42,6 +42,7 @@ type ArangoBaseRepositoryInterface interface {
 	NewQuery() *ArangoQuery
 	Get(request interface{}) error
 	Count(request interface{}) error
+	Raw(c context.Context, query string, args map[string]interface{}, response interface{}) error
 
 	// Transaction
 	BeginTransaction(c context.Context, read, write, exclusive []string, opts *driver.BeginTransactionOptions) (Transaction, error)
