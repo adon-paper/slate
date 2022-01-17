@@ -16,6 +16,7 @@ import (
 type ArangoBaseRepositoryInterface interface {
 	// Get Raw DB Functions
 	DB() driver.Database
+	Arango() ArangoDB
 
 	// Base Functions
 	BuildFilter(s interface{}, filters []ArangoFilterQueryBuilder, joinCollection string, prefixes ...string) []ArangoFilterQueryBuilder
@@ -416,6 +417,10 @@ func (r *ArangoBaseRepository) Delete(c context.Context, request ArangoInterface
 
 func (r *ArangoBaseRepository) DB() driver.Database {
 	return r.ArangoDB.DB()
+}
+
+func (r *ArangoBaseRepository) Arango() ArangoDB {
+	return r.ArangoDB
 }
 
 func (r *ArangoBaseRepository) BeginTransaction(c context.Context, read, write, exclusive []string, opts *driver.BeginTransactionOptions) (Transaction, error) {
