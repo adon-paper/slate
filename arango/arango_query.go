@@ -347,7 +347,7 @@ func (r *ArangoQuery) Traversal(source string, direction traversalDirection, wit
 }
 
 func (r *ArangoQuery) Returns(returns ...string) *ArangoQuery {
-	r.returns = "MERGE("
+	// r.returns = "MERGE("
 
 	for index, ret := range returns {
 		if strings.Contains(ret, ":") {
@@ -361,7 +361,9 @@ func (r *ArangoQuery) Returns(returns ...string) *ArangoQuery {
 		}
 	}
 
-	r.returns += ")"
+	if strings.Contains(r.returns, "{") {
+		r.returns = fmt.Sprintf("MERGE(%s)", r.returns)
+	}
 
 	return r
 }
