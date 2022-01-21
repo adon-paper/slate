@@ -361,7 +361,7 @@ func (r *ArangoQuery) Returns(returns ...string) *ArangoQuery {
 		}
 	}
 
-	if strings.Contains(r.returns, "{") {
+	if strings.Contains(r.returns, "{") || strings.Contains(r.returns, ",") {
 		r.returns = fmt.Sprintf("MERGE(%s)", r.returns)
 	}
 
