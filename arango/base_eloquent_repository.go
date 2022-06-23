@@ -39,6 +39,10 @@ func (r *ArangoBaseRepository) Sort(sortField, sortOrder string) *ArangoQuery {
 	return NewQuery(r.Collection, r.ArangoDB).Sort(sortField, sortOrder)
 }
 
+func (r *ArangoBaseRepository) SortRaw(sortField, sortOrder string) *ArangoQuery {
+	return NewQuery(r.Collection, r.ArangoDB).SortRaw(sortField, sortOrder)
+}
+
 func (r *ArangoBaseRepository) Traversal(sourceId string, direction traversalDirection) *ArangoQuery {
 	return NewQuery(r.Collection, r.ArangoDB).Traversal(sourceId, direction)
 }

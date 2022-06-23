@@ -340,6 +340,18 @@ func (r *ArangoQuery) Sort(sortField, sortOrder string) *ArangoQuery {
 	return r
 }
 
+func (r *ArangoQuery) SortRaw(sortField, sortOrder string) *ArangoQuery {
+	r.sortField = sortField
+
+	if sortOrder != "ASC" {
+		r.sortOrder = "DESC"
+	} else {
+		r.sortOrder = "ASC"
+	}
+
+	return r
+}
+
 func (r *ArangoQuery) Traversal(source string, direction traversalDirection, withEdge ...bool) *ArangoQuery {
 	r.traversal.enabled = true
 	r.traversal.direction = direction
