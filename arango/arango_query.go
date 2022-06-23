@@ -45,6 +45,7 @@ type ArangoQuery struct {
 	first      bool
 	alias      string
 	outeralias string
+	raw        bool
 	ArangoDB   ArangoDB
 }
 
@@ -70,6 +71,13 @@ func SubQueryWithAlias(collection string, alias string) *ArangoQuery {
 		collection: collection,
 		alias:      alias,
 		outeralias: collection,
+	}
+}
+
+func Raw(query string) *ArangoQuery {
+	return &ArangoQuery{
+		raw:   true,
+		query: query,
 	}
 }
 
@@ -379,7 +387,9 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 		sortQuery  string
 		finalQuery string
 	)
-
+	if r.raw == true{
+		return r.query, r.filterArgs
+	}
 	if r.returns == "" {
 		returnData = "MERGE(" + r.alias
 
