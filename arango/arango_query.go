@@ -290,6 +290,11 @@ func (r *ArangoQuery) WhereOrColumn(column string, operator string, value string
 	return r
 }
 
+func (r *ArangoQuery) WhereRaw(params string) *ArangoQuery {
+	r.query += params
+	return r
+}
+
 func (r *ArangoQuery) Join(query *ArangoQuery) *ArangoQuery {
 	q, f := query.toQueryWithoutReturn()
 	r.query += " " + q

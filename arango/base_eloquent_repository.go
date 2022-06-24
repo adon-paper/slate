@@ -14,6 +14,10 @@ func (r *ArangoBaseRepository) WhereColumn(column string, operator string, value
 	return NewQuery(r.Collection, r.ArangoDB).WhereColumn(column, operator, value)
 }
 
+func (r *ArangoBaseRepository) WhereRaw(params string) *ArangoQuery {
+	return NewQuery(r.Collection, r.ArangoDB).WhereRaw(params)
+}
+
 func (r *ArangoBaseRepository) WithOne(repo *ArangoQuery, alias string) *ArangoQuery {
 	return NewQuery(r.Collection, r.ArangoDB).WithOne(repo, alias)
 }
