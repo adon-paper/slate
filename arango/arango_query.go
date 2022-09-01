@@ -252,6 +252,8 @@ func (r *ArangoQuery) Where(param ...interface{}) *ArangoQuery {
 
 func (r *ArangoQuery) WhereOr(column string, operator string, value interface{}) *ArangoQuery {
 	argKey := strings.ReplaceAll(r.alias+"_"+column, ".", "_")
+	argKey = strings.ReplaceAll(argKey, "LOWER(", "")
+	argKey = strings.ReplaceAll(argKey, ")", "")
 
 	if strings.Contains(column, ".") {
 		r.query += " OR " + column + " " + operator + " @" + argKey
@@ -404,7 +406,7 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 		sortQuery  string
 		finalQuery string
 	)
-	if r.raw == true{
+	if r.raw == true {
 		return r.query, r.filterArgs
 	}
 	if r.returns == "" {
