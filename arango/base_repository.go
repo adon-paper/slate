@@ -211,7 +211,7 @@ func (r *ArangoBaseRepository) buildQuery(queryBuilder ArangoQueryBuilder) (stri
 	} else {
 		query = withQuery + `
 		FOR ` + alias + ` IN ` + collection +
-			joinQuery + " " + filterQuery + sort + `
+			joinQuery + " " + filterQuery + " " + sort + `
 		RETURN ` + resultQuery
 	}
 
