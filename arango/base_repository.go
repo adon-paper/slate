@@ -284,6 +284,7 @@ func (r *ArangoBaseRepository) BuildFilter(s interface{}, filters []ArangoFilter
 func (r *ArangoBaseRepository) First(c context.Context, request ArangoInterface) error {
 	queryBuilder := ArangoQueryBuilder{
 		Filters: r.BuildFilter(request, []ArangoFilterQueryBuilder{}, ""),
+		Rows:    1,
 	}
 
 	return r.RawFirst(c, queryBuilder, request)
