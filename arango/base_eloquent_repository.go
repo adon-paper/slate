@@ -47,7 +47,7 @@ func (r *ArangoBaseRepository) SortRaw(sortField, sortOrder string) *ArangoQuery
 	return NewQuery(r.Collection, r.ArangoDB).SortRaw(sortField, sortOrder)
 }
 
-func (r *ArangoBaseRepository) Traversal(sourceId string, direction traversalDirection) *ArangoQuery {
+func (r *ArangoBaseRepository) Traversal(sourceId string, direction TraversalDirection) *ArangoQuery {
 	return NewQuery(r.Collection, r.ArangoDB).Traversal(sourceId, direction)
 }
 

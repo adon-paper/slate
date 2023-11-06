@@ -344,7 +344,7 @@ func (mr *MockArangoBaseRepositoryInterfaceMockRecorder) Sort(sortField, sortOrd
 }
 
 // Traversal mocks base method.
-func (m *MockArangoBaseRepositoryInterface) Traversal(sourceId string, direction traversalDirection) *ArangoQuery {
+func (m *MockArangoBaseRepositoryInterface) Traversal(sourceId string, direction TraversalDirection) *ArangoQuery {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Traversal", sourceId, direction)
 	ret0, _ := ret[0].(*ArangoQuery)

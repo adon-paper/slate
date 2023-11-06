@@ -38,7 +38,7 @@ type ArangoBaseRepositoryInterface interface {
 	Offset(offset int) *ArangoQuery
 	Limit(limit int) *ArangoQuery
 	Sort(sortField, sortOrder string) *ArangoQuery
-	Traversal(sourceId string, direction traversalDirection) *ArangoQuery
+	Traversal(sourceId string, direction TraversalDirection) *ArangoQuery
 	Returns(returns ...string) *ArangoQuery
 	NewQuery() *ArangoQuery
 	Get(request interface{}) error
