@@ -14,18 +14,18 @@ import (
 )
 
 type (
-	traversalDirection string
+	TraversalDirection string
 )
 
 const (
-	INBOUND  traversalDirection = "INBOUND"
-	OUTBOUND traversalDirection = "OUTBOUND"
-	ANY      traversalDirection = "ANY"
+	INBOUND  TraversalDirection = "INBOUND"
+	OUTBOUND TraversalDirection = "OUTBOUND"
+	ANY      TraversalDirection = "ANY"
 )
 
 type arangoQueryTraversal struct {
 	enabled   bool
-	direction traversalDirection
+	direction TraversalDirection
 	sourceId  string
 	withEdge  bool
 }
@@ -357,7 +357,7 @@ func (r *ArangoQuery) SortRaw(sortField, sortOrder string) *ArangoQuery {
 	return r
 }
 
-func (r *ArangoQuery) Traversal(source string, direction traversalDirection, withEdge ...bool) *ArangoQuery {
+func (r *ArangoQuery) Traversal(source string, direction TraversalDirection, withEdge ...bool) *ArangoQuery {
 	r.traversal.enabled = true
 	r.traversal.direction = direction
 	r.traversal.sourceId = source
@@ -404,7 +404,7 @@ func (r *ArangoQuery) ToQuery() (string, map[string]interface{}) {
 		sortQuery  string
 		finalQuery string
 	)
-	if r.raw == true{
+	if r.raw == true {
 		return r.query, r.filterArgs
 	}
 	if r.returns == "" {
