@@ -46,6 +46,32 @@ func InitArangoDB(host, database, username, password string, context context.Con
 	}, nil
 }
 
+func InitArangoDBWithConnectionLimit(host, database, username, password string, context context.Context, connLimit int) (ArangoDB, error) {
+	conn, err := http.NewConnection(http.ConnectionConfig{
+		Endpoints: []string{host},
+		ConnLimit: connLimit,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error when creating new connection to arango : %s", err.Error())
+	}
+	c, err := driver.NewClient(driver.ClientConfig{
+		Connection:     conn,
+		Authentication: driver.BasicAuthentication(username, password),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error when creating new arango client : %s", err.Error())
+	}
+
+	db, err := connect(database, c, context)
+	if err != nil {
+		return nil, fmt.Errorf("error when opening database connection : %s", err.Error())
+	}
+	return &arangoDB{
+		client: c,
+		db:     db,
+	}, nil
+}
+
 func InitArangoDBTest() (ArangoDB, error) {
 	return &arangoDB{}, nil
 }
