@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	go_driver "github.com/arangodb/go-driver"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockArangoBaseRepositoryInterface is a mock of ArangoBaseRepositoryInterface interface.
