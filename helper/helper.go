@@ -27,7 +27,7 @@ func Empty(a interface{}) bool {
 	case reflect.Slice, reflect.Array, reflect.Map:
 		return value.Len() == 0
 	case reflect.Bool:
-		return value.Bool() == false
+		return !value.Bool()
 	}
 	return false
 }
