@@ -3,35 +3,31 @@ package helper
 import (
 	"reflect"
 	"strings"
-	"time"
 )
 
 func Empty(a interface{}) bool {
-	var emptyTime time.Time
-	var emptyFloat64 float64
-	var emptyFloat32 float32
-	var emptyInt64 int64
-	var emptyInt32 int32
-	var emptyInt int
-
-	if a == false ||
-		a == "" ||
-		a == emptyInt64 ||
-		a == emptyInt32 ||
-		a == emptyInt ||
-		a == emptyFloat32 ||
-		a == emptyFloat64 ||
-		a == emptyTime ||
-		a == nil {
+	if a == nil {
 		return true
 	}
 
-	switch reflect.TypeOf(a).Kind() {
-	case reflect.Array, reflect.Slice, reflect.Map:
-		arr := reflect.ValueOf(a)
-		if arr.Len() == 0 {
-			return true
-		}
+	kind := reflect.TypeOf(a).Kind()
+	value := reflect.ValueOf(a)
+
+	switch kind {
+	case reflect.String:
+		return value.String() == ""
+	case reflect.Int, reflect.Int32, reflect.Int64, reflect.Int8, reflect.Int16, reflect.Uint, reflect.Uint32, reflect.Uint64, reflect.Uint8, reflect.Uint16:
+		return value.Int() == 0
+	case reflect.Float32, reflect.Float64:
+		return value.Float() == 0
+	case reflect.Struct:
+		return value.IsZero()
+	case reflect.Ptr:
+		return value.IsNil()
+	case reflect.Slice, reflect.Array, reflect.Map:
+		return value.Len() == 0
+	case reflect.Bool:
+		return !value.Bool()
 	}
 	return false
 }
@@ -48,9 +44,9 @@ func MergeMaps(maps ...map[string]interface{}) map[string]interface{} {
 	return result
 }
 
-func IsAggregates(s string) bool{
-	aggregate := []string{"COUNT","SUM"}
-	if stringContainInSlice(s, aggregate){
+func IsAggregates(s string) bool {
+	aggregate := []string{"COUNT", "SUM"}
+	if stringContainInSlice(s, aggregate) {
 		return true
 	}
 	return false
