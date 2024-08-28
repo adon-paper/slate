@@ -63,7 +63,7 @@ func (r *ArangoBaseRepository) Count(request interface{}) error {
 	return NewQuery(r.Collection, r.ArangoDB).Count(request)
 }
 
-func (r *ArangoBaseRepository) NewQuery() *ArangoQuery {
+func (r *ArangoBaseRepository) NewQuery() ArangoQueryInterface {
 	return NewQuery(r.Collection, r.ArangoDB)
 }
 

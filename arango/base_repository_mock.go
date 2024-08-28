@@ -245,10 +245,10 @@ func (mr *MockArangoBaseRepositoryInterfaceMockRecorder) Limit(limit any) *gomoc
 }
 
 // NewQuery mocks base method.
-func (m *MockArangoBaseRepositoryInterface) NewQuery() *ArangoQuery {
+func (m *MockArangoBaseRepositoryInterface) NewQuery() ArangoQueryInterface {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewQuery")
-	ret0, _ := ret[0].(*ArangoQuery)
+	ret0, _ := ret[0].(ArangoQueryInterface)
 	return ret0
 }
 

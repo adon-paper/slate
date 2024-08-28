@@ -40,7 +40,7 @@ type ArangoBaseRepositoryInterface interface {
 	Sort(sortField, sortOrder string) *ArangoQuery
 	Traversal(sourceId string, direction TraversalDirection) *ArangoQuery
 	Returns(returns ...string) *ArangoQuery
-	NewQuery() *ArangoQuery
+	NewQuery() ArangoQueryInterface
 	Get(request interface{}) error
 	Count(request interface{}) error
 	Raw(c context.Context, query string, args map[string]interface{}, response interface{}) error

@@ -49,7 +49,35 @@ type ArangoQuery struct {
 	ArangoDB   ArangoDB
 }
 
-func NewQuery(collection string, db ArangoDB) *ArangoQuery {
+type ArangoQueryInterface interface {
+	getArgKey(argKey string) string
+	where(column string, operator string, value interface{}) *ArangoQuery
+	clearQuery()
+	with(query *ArangoQuery, alias string) *ArangoQuery
+	toQueryWithoutReturn() (string, map[string]interface{})
+	executeQuery(c context.Context, request interface{}) error
+	setRawQuery(query string, args map[string]interface{}) *ArangoQuery
+	Where(param ...interface{}) *ArangoQuery
+	WhereOr(column string, operator string, value interface{}) *ArangoQuery
+	WhereColumn(column string, operator string, value string) *ArangoQuery
+	WhereOrColumn(column string, operator string, value string) *ArangoQuery
+	WhereRaw(params string) *ArangoQuery
+	Join(query *ArangoQuery) *ArangoQuery
+	WithOne(repo *ArangoQuery, alias string) *ArangoQuery
+	WithMany(repo *ArangoQuery, alias string) *ArangoQuery
+	Offset(offset int) *ArangoQuery
+	Limit(limit int) *ArangoQuery
+	Sort(sortField, sortOrder string) *ArangoQuery
+	SortRaw(sortField, sortOrder string) *ArangoQuery
+	Traversal(source string, direction TraversalDirection, withEdge ...bool) *ArangoQuery
+	Returns(returns ...string) *ArangoQuery
+	ToQuery() (string, map[string]interface{})
+	Get(request interface{}) error
+	GetWithContext(c context.Context, request interface{}) error
+	Count(request interface{}) error
+}
+
+func NewQuery(collection string, db ArangoDB) ArangoQueryInterface {
 	return &ArangoQuery{
 		collection: collection,
 		alias:      collection,
@@ -58,7 +86,7 @@ func NewQuery(collection string, db ArangoDB) *ArangoQuery {
 	}
 }
 
-func SubQuery(collection string) *ArangoQuery {
+func SubQuery(collection string) ArangoQueryInterface {
 	return &ArangoQuery{
 		collection: collection,
 		alias:      collection,
@@ -66,7 +94,7 @@ func SubQuery(collection string) *ArangoQuery {
 	}
 }
 
-func SubQueryWithAlias(collection string, alias string) *ArangoQuery {
+func SubQueryWithAlias(collection string, alias string) ArangoQueryInterface {
 	return &ArangoQuery{
 		collection: collection,
 		alias:      alias,
@@ -74,7 +102,7 @@ func SubQueryWithAlias(collection string, alias string) *ArangoQuery {
 	}
 }
 
-func Raw(query string) *ArangoQuery {
+func Raw(query string) ArangoQueryInterface {
 	return &ArangoQuery{
 		raw:   true,
 		query: query,
